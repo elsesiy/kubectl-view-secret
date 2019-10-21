@@ -2,7 +2,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/elsesiy/kubectl-view-secret)](https://goreportcard.com/report/github.com/elsesiy/kubectl-view-secret)
 [![Build Status](https://travis-ci.org/elsesiy/kubectl-view-secret.svg?branch=master)](https://travis-ci.org/elsesiy/kubectl-view-secret)
 [![Twitter](https://img.shields.io/badge/twitter-@elsesiy-blue.svg)](http://twitter.com/elsesiy)
-[![GitHub release](https://github.com/elsesiy/kubectl-view-secret/releases)](https://img.shields.io/github/v/release/elsesiy/kubectl-view-secret.svg)
+[![GitHub release](https://img.shields.io/github/release/elsesiy/kubectl-view-secret.svg)](https://github.com/elsesiy/kubectl-view-secret/releases)
 
 This plugin allows for easy secret decoding. Useful if you want to see what's inside of a secret without always go throug the following:
 1. `kubectl get secret <secret> -o yaml`

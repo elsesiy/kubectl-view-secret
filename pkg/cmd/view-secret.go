@@ -4,39 +4,45 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	clioptions "k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/utils/pointer"
+	"io"
+	"os"
 	"os/exec"
 )
 
 const example = `
-	# decode secret by name
+	# print secret keys
 	%[1]s view-secret <secret>
 
-	# decode secret by name in different namespace
-	%[1]s view-secret <secret> -n/--namespace ns
+	# decode secret specific key
+	%[1]s view-secret <secret> <key>
+
+	# decode all contents of a secret
+	%[1]s view-secret <secret> -a/--all
+
+	# print keys for secret in different namespace
+	%[1]s view-secret <secret> -n/--namespace <ns>
 `
+
+var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
-	configFlags *clioptions.ConfigFlags
-	clioptions.IOStreams
-
-	cmdArgs []string
+	customNamespace string
+	decodeAll       bool
+	secretName      string
+	secretKey       string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
-func NewCmdViewSecret(streams clioptions.IOStreams) *cobra.Command {
-	res := &CommandOpts{
-		configFlags: &clioptions.ConfigFlags{Namespace: pointer.StringPtr("")},
-		IOStreams:   streams,
-	}
+func NewCmdViewSecret() *cobra.Command {
+	res := &CommandOpts{}
 
 	cmd := &cobra.Command{
-		Use:          "view-secret [secret-name]",
-		Short:        "Decode a kubernetes secret by name in the current context/cluster/namespace",
+		Use:          "view-secret [secret-name] [secret-key]",
+		Short:        "Decode a kubernetes secret by name & key in the current context/cluster/namespace",
 		Example:      fmt.Sprintf(example, "kubectl"),
 		SilenceUsage: true,
 		RunE: func(c *cobra.Command, args []string) error {
@@ -51,64 +57,74 @@ func NewCmdViewSecret(streams clioptions.IOStreams) *cobra.Command {
 		},
 	}
 
-	res.configFlags.AddFlags(cmd.Flags())
+	cmd.Flags().BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
+	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
 
 	return cmd
 }
 
 // Validate ensures proper command usage
-func (d *CommandOpts) Validate(args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("\nplease provide only the secret name to be decoded, see --help for usage instructions")
+func (c *CommandOpts) Validate(args []string) error {
+	argLen := len(args)
+	if argLen < 1 || argLen > 2 {
+		return fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
 	}
 
-	d.cmdArgs = args
+	c.secretName = args[0]
+	if argLen == 2 {
+		c.secretKey = args[1]
+	}
 
 	return nil
 }
 
 // Retrieve reads the kubeconfig and decodes the secret
-func (d *CommandOpts) Retrieve(c *cobra.Command) error {
-	kubeCfg, err := d.configFlags.ToRawKubeConfigLoader().RawConfig()
-	if err != nil {
-		return err
-	}
-
-	currCtx := kubeCfg.Contexts[kubeCfg.CurrentContext]
-	currCluster := currCtx.Cluster
-	currNs := currCtx.Namespace
-
-	nsOverride, _ := c.Flags().GetString("namespace")
-	if nsOverride != "" {
-		currNs = nsOverride
-	}
+func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
+	nsOverride, _ := cmd.Flags().GetString("namespace")
 
 	var res, cmdErr bytes.Buffer
-	commandArgs := []string{"get", "secret", d.cmdArgs[0], "-n", currNs, "-o", "json"}
+	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
+	if nsOverride != "" {
+		commandArgs = append(commandArgs, "-n", nsOverride)
+	}
+
 	out := exec.Command("kubectl", commandArgs...)
 	out.Stdout = &res
 	out.Stderr = &cmdErr
-	err = out.Run()
+	err := out.Run()
 	if err != nil {
 		fmt.Print(cmdErr.String())
 		return nil
 	}
 
-	var secJson map[string]interface{}
-	if err := json.Unmarshal(res.Bytes(), &secJson); err != nil {
+	var secret map[string]interface{}
+	if err := json.Unmarshal(res.Bytes(), &secret); err != nil {
 		return err
 	}
 
-	secrets := secJson["data"].(map[string]interface{})
+	return ProcessSecret(os.Stdout, secret, c.secretKey, c.decodeAll)
+}
 
-	if len(secrets) > 0 {
-		fmt.Printf("Decoded secret '%s' in namespace '%s' for cluster '%s'\n\n", d.cmdArgs[0], currNs, currCluster)
-		for k, v := range secrets {
+// ProcessSecret takes the secret and user input to determine the output
+func ProcessSecret(w io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
+	data := secret["data"].(map[string]interface{})
+
+	if decodeAll {
+		for k, v := range data {
 			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
-			fmt.Printf("%s=%s\n", k, b64d)
+			_, _ = fmt.Fprintf(w, "%s=%s\n", k, b64d)
+		}
+	} else if secretKey != "" {
+		if v, ok := data[secretKey]; ok {
+			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			_, _ = fmt.Fprintln(w, string(b64d))
+		} else {
+			return ErrSecretKeyNotFound
 		}
 	} else {
-		fmt.Println("the provided secret is empty")
+		for k := range data {
+			_, _ = fmt.Fprintln(w, k)
+		}
 	}
 
 	return nil

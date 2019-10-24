@@ -11,7 +11,9 @@ This plugin allows for easy secret decoding. Useful if you want to see what's in
 
 Instead you can now do:
 
-    kubectl view-secret <secret>
+    kubectl view-secret <secret> # prints secret keys
+    kubectl view-secret <secret> <key> # decodes specific entry
+    kubeclt view-secret <secret> -a/--all # decodes all contents
     kubectl view-secret <secret> -n/--namespace <ns> # override namespace
 
 ## Build

@@ -3,7 +3,9 @@ go: '1.13'
 env:
   - GO111MODULE=on
 
-script: make
+script:
+  - make test
+  - make
 
 deploy:
   - provider: script

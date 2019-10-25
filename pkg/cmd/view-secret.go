@@ -8,30 +8,42 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 )
 
-const example = `
+const (
+	example = `
 	# print secret keys
 	%[1]s view-secret <secret>
 
-	# decode secret specific key
+	# decode specific entry
 	%[1]s view-secret <secret> <key>
 
-	# decode all contents of a secret
+	# decode all contents
 	%[1]s view-secret <secret> -a/--all
 
 	# print keys for secret in different namespace
 	%[1]s view-secret <secret> -n/--namespace <ns>
+
+	# suppress info output
+	%[1]s view-secret <secret> -q/--quiet
 `
 
+	singleKeyDescription = "Choosing key: %[1]s"
+	listDescription      = "Multiple sub keys found. Specify another argument, one of:"
+	listPrefix           = "->"
+)
+
+// ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
 var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
 	customNamespace string
 	decodeAll       bool
+	quiet           bool
 	secretName      string
 	secretKey       string
 }
@@ -58,6 +70,7 @@ func NewCmdViewSecret() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
+	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
 	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
 
 	return cmd
@@ -93,7 +106,7 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	out.Stderr = &cmdErr
 	err := out.Run()
 	if err != nil {
-		fmt.Print(cmdErr.String())
+		_, _ = fmt.Fprint(os.Stderr, cmdErr.String())
 		return nil
 	}
 
@@ -102,28 +115,39 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 		return err
 	}
 
-	return ProcessSecret(os.Stdout, secret, c.secretKey, c.decodeAll)
+	if c.quiet {
+		return ProcessSecret(os.Stdout, ioutil.Discard, secret, c.secretKey, c.decodeAll)
+	}
+
+	return ProcessSecret(os.Stdout, os.Stderr, secret, c.secretKey, c.decodeAll)
 }
 
 // ProcessSecret takes the secret and user input to determine the output
-func ProcessSecret(w io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
+func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
 	data := secret["data"].(map[string]interface{})
 
 	if decodeAll {
 		for k, v := range data {
 			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
-			_, _ = fmt.Fprintf(w, "%s=%s\n", k, b64d)
+			_, _ = fmt.Fprintf(outWriter, "%s=%s\n\n", k, b64d)
+		}
+	} else if len(data) == 1 {
+		for k, v := range data {
+			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
+			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			_, _ = fmt.Fprint(outWriter, string(b64d))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
 			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
-			_, _ = fmt.Fprintln(w, string(b64d))
+			_, _ = fmt.Fprint(outWriter, string(b64d))
 		} else {
 			return ErrSecretKeyNotFound
 		}
 	} else {
+		_, _ = fmt.Fprintln(errWriter, listDescription)
 		for k := range data {
-			_, _ = fmt.Fprintln(w, k)
+			_, _ = fmt.Fprintf(outWriter, "%s %s\n", listPrefix, k)
 		}
 	}
 

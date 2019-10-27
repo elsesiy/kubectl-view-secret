@@ -1,6 +1,6 @@
 # kubectl-view-secret
 [![Go Report Card](https://goreportcard.com/badge/github.com/elsesiy/kubectl-view-secret)](https://goreportcard.com/report/github.com/elsesiy/kubectl-view-secret)
-[![Build Status](https://travis-ci.org/elsesiy/kubectl-view-secret.svg?branch=master)](https://travis-ci.org/elsesiy/kubectl-view-secret)
+[![Build Status](https://travis-ci.com/elsesiy/kubectl-view-secret.svg?branch=master)](https://travis-ci.com/elsesiy/kubectl-view-secret)
 [![Twitter](https://img.shields.io/badge/twitter-@elsesiy-blue.svg)](http://twitter.com/elsesiy)
 [![GitHub release](https://img.shields.io/github/release/elsesiy/kubectl-view-secret.svg)](https://github.com/elsesiy/kubectl-view-secret/releases)
 

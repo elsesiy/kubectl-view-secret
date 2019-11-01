@@ -26,7 +26,19 @@ Instead you can now do:
     # suppress info output
     kubectl view-secret <secret> -q/--quiet
 
-## Build
+## Usage
+
+### Krew
+This plugin is available through [krew](https://krew.dev) via `kubectl krew install view-secret`.
+
+### Binary
+You can find the latest binaries in the [releases](https://github.com/elsesiy/kubectl-view-secret/releases) section.  
+To install it, place it somewhere in your `$PATH` for `kubectl` to pick it up.
+
+**Note**: If you build from source or download the binary, you'll have to change the name of the binary to `kubectl-view_secret` (`-` to `_` in `view-secret`)
+due to the enforced naming convention for plugins by `kubectl`. More on this [here](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/#naming-a-plugin).
+
+### Build
 
     # Clone this repository (or your fork)
     git clone https://github.com/elsesiy/kubectl-view-secret

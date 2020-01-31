@@ -42,6 +42,7 @@ var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
 	customNamespace string
+	customContext	string
 	decodeAll       bool
 	quiet           bool
 	secretName      string
@@ -72,6 +73,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
 	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
 	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
+	cmd.Flags().StringVar(&res.customContex, "context", res.customContext, "override cluter context")
 
 	return cmd
 }

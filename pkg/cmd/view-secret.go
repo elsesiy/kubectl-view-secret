@@ -27,6 +27,9 @@ const (
 	# print keys for secret in different namespace
 	%[1]s view-secret <secret> -n/--namespace <ns>
 
+	# print keys for secret in different context
+	%[1]s view-secret <secret> -c/--context <ctx>
+
 	# suppress info output
 	%[1]s view-secret <secret> -q/--quiet
 `
@@ -42,6 +45,7 @@ var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
 	customNamespace string
+	customContext   string
 	decodeAll       bool
 	quiet           bool
 	secretName      string
@@ -72,6 +76,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
 	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
 	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
+	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
 
 	return cmd
 }
@@ -94,11 +99,16 @@ func (c *CommandOpts) Validate(args []string) error {
 // Retrieve reads the kubeconfig and decodes the secret
 func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	nsOverride, _ := cmd.Flags().GetString("namespace")
+	ctxOverride, _ := cmd.Flags().GetString("context")
 
 	var res, cmdErr bytes.Buffer
 	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
 	if nsOverride != "" {
 		commandArgs = append(commandArgs, "-n", nsOverride)
+	}
+
+	if ctxOverride != "" {
+		commandArgs = append(commandArgs, "--context", ctxOverride)
 	}
 
 	out := exec.Command("kubectl", commandArgs...)

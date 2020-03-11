@@ -134,22 +134,27 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 
 // ProcessSecret takes the secret and user input to determine the output
 func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
-	data := secret["data"].(map[string]interface{})
+	data, err := secret["data"].(map[string]interface{})
+
+	if !err {
+		fmt.Fprint(outWriter, "\nThere is no 'data' section in this secret")
+		return nil
+	}
 
 	if decodeAll {
 		for k, v := range data {
-			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
 			_, _ = fmt.Fprintf(outWriter, "%s=%s\n\n", k, b64d)
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
-			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
 			_, _ = fmt.Fprint(outWriter, string(b64d))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
-			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
 			_, _ = fmt.Fprint(outWriter, string(b64d))
 		} else {
 			return ErrSecretKeyNotFound

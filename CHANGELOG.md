@@ -1,6 +1,18 @@
 # Changelog
 
-## [v0.4.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.4.0) (2020-02-04)
+## [v0.5.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.5.0) (2020-03-20)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.4.0...v0.5.0)
+
+**Implemented enhancements:**
+
+- Handle empty secrets [\#8](https://github.com/elsesiy/kubectl-view-secret/issues/8)
+
+**Fixed bugs:**
+
+- Change base64 encoding used during decode [\#9](https://github.com/elsesiy/kubectl-view-secret/issues/9)
+
+## [v0.4.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.4.0) (2020-02-05)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.3.0...v0.4.0)
 

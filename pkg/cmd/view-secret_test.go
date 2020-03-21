@@ -5,18 +5,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/magiconair/properties/assert"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/magiconair/properties/assert"
 )
 
 var testSecret = `
 {
     "data": {
+		"TEST_CONN_STR": "bW9uZ29kYjovL215REJSZWFkZXI6RDFmZmljdWx0UCU0MHNzdzByZEBtb25nb2RiMC5leGFtcGxlLmNvbToyNzAxNy8/YXV0aFNvdXJjZT1hZG1pbg==",
         "TEST_PASSWORD": "c2VjcmV0Cg==",
-        "TEST_PASSWORD_2": "dmVyeXNlY3JldAo="
+		"TEST_PASSWORD_2": "dmVyeXNlY3JldAo="
     }
 }
 `
@@ -29,10 +31,13 @@ var testSecretSingle = `
 }
 `
 
+var testSecretEmpty = "{}"
+
 func TestProcessSecret(t *testing.T) {
-	var secret, secretSingle map[string]interface{}
+	var secret, secretSingle, secretEmpty map[string]interface{}
 	_ = json.Unmarshal([]byte(testSecret), &secret)
 	_ = json.Unmarshal([]byte(testSecretSingle), &secretSingle)
+	_ = json.Unmarshal([]byte(testSecretEmpty), &secretEmpty)
 
 	tests := map[string]struct {
 		secretData map[string]interface{}
@@ -42,11 +47,12 @@ func TestProcessSecret(t *testing.T) {
 		decodeAll  bool
 		err        error
 	}{
-		"view-secret <secret>":            {secret, []string{"-> TEST_PASSWORD", "-> TEST_PASSWORD_2"}, []string{listDescription}, "", false, nil},
+		"view-secret <secret>":            {secret, []string{"-> TEST_CONN_STR", "-> TEST_PASSWORD", "-> TEST_PASSWORD_2"}, []string{listDescription}, "", false, nil},
 		"view-secret <secret-single-key>": {secretSingle, []string{"secret"}, []string{fmt.Sprintf(singleKeyDescription, "SINGLE_PASSWORD")}, "", false, nil},
 		"view-secret test TEST_PASSWORD":  {secret, []string{"secret"}, nil, "TEST_PASSWORD", false, nil},
-		"view-secret test -a":             {secret, []string{"", "", "", "", "TEST_PASSWORD=secret", "TEST_PASSWORD_2=verysecret"}, nil, "", true, nil},
+		"view-secret test -a":             {secret, []string{"", "", "", "", "", "TEST_CONN_STR=mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin", "TEST_PASSWORD=secret", "TEST_PASSWORD_2=verysecret"}, nil, "", true, nil},
 		"view-secret test NONE":           {secret, nil, nil, "NONE", false, ErrSecretKeyNotFound},
+		"view-secret <secret-empty>":      {secretEmpty, nil, nil, "", false, ErrSecretEmpty},
 	}
 
 	for name, test := range tests {

@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -41,6 +42,9 @@ const (
 
 // ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
 var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
+
+// ErrSecretEmpty is thrown when there's no data in the secret
+var ErrSecretEmpty = errors.New("secret is empty")
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
@@ -134,22 +138,25 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 
 // ProcessSecret takes the secret and user input to determine the output
 func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
-	data := secret["data"].(map[string]interface{})
+	data, ok := secret["data"].(map[string]interface{})
+	if !ok {
+		return ErrSecretEmpty
+	}
 
 	if decodeAll {
 		for k, v := range data {
-			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
 			_, _ = fmt.Fprintf(outWriter, "%s=%s\n\n", k, b64d)
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
-			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
 			_, _ = fmt.Fprint(outWriter, string(b64d))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
-			b64d, _ := base64.URLEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
 			_, _ = fmt.Fprint(outWriter, string(b64d))
 		} else {
 			return ErrSecretKeyNotFound

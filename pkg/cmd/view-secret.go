@@ -54,6 +54,7 @@ type CommandOpts struct {
 	quiet           bool
 	secretName      string
 	secretKey       string
+	kubeconfig      string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
@@ -81,6 +82,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
 	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
 	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
+	cmd.Flags().StringVarP(&res.kubeconfig, "kubeconfig", "k", res.kubeconfig, "set the kubeconfig file")
 
 	return cmd
 }
@@ -104,6 +106,7 @@ func (c *CommandOpts) Validate(args []string) error {
 func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	nsOverride, _ := cmd.Flags().GetString("namespace")
 	ctxOverride, _ := cmd.Flags().GetString("context")
+	kubeconfigFile, _ := cmd.Flags().GetString("kubeconfig")
 
 	var res, cmdErr bytes.Buffer
 	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
@@ -113,6 +116,10 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 
 	if ctxOverride != "" {
 		commandArgs = append(commandArgs, "--context", ctxOverride)
+	}
+
+	if kubeconfigFile != "" {
+		commandArgs = append(commandArgs, "--kubeconfig", kubeconfigFile)
 	}
 
 	out := exec.Command("kubectl", commandArgs...)

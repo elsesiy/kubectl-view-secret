@@ -1,6 +1,14 @@
 # Changelog
 
-## [v0.5.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.5.0) (2020-03-20)
+## [v0.6.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.6.0) (2020-07-25)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.5.0...v0.6.0)
+
+**Closed issues:**
+
+- Add kubeconfig option [\#11](https://github.com/elsesiy/kubectl-view-secret/issues/11)
+
+## [v0.5.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.5.0) (2020-03-21)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.4.0...v0.5.0)
 

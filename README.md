@@ -1,10 +1,12 @@
 # kubectl-view-secret
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/elsesiy/kubectl-view-secret)](https://goreportcard.com/report/github.com/elsesiy/kubectl-view-secret)
 [![Build Status](https://travis-ci.com/elsesiy/kubectl-view-secret.svg?branch=master)](https://travis-ci.com/elsesiy/kubectl-view-secret)
 [![Twitter](https://img.shields.io/badge/twitter-@elsesiy-blue.svg)](http://twitter.com/elsesiy)
 [![GitHub release](https://img.shields.io/github/release/elsesiy/kubectl-view-secret.svg)](https://github.com/elsesiy/kubectl-view-secret/releases)
 
 This plugin allows for easy secret decoding. Useful if you want to see what's inside of a secret without always go through the following:
+
 1. `kubectl get secret <secret> -o yaml`
 2. Copy base64 encoded secret
 3. `echo "b64string" | base64 -d`
@@ -26,15 +28,20 @@ Instead you can now do:
     # print keys for secret in different context
     kubectl view-secret <secret> -c/--context <ctx>
 
+    # print keys for secret by providing kubeconfig
+    kubectl view-secret <secret> -k/--kubeconfig <cfg>
+
     # suppress info output
     kubectl view-secret <secret> -q/--quiet
 
 ## Usage
 
 ### Krew
+
 This plugin is available through [krew](https://krew.dev) via `kubectl krew install view-secret`.
 
 ### Binary
+
 You can find the latest binaries in the [releases](https://github.com/elsesiy/kubectl-view-secret/releases) section.  
 To install it, place it somewhere in your `$PATH` for `kubectl` to pick it up.
 

@@ -31,6 +31,9 @@ const (
 	# print keys for secret in different context
 	%[1]s view-secret <secret> -c/--context <ctx>
 
+	# print keys for secret by providing kubeconfig
+	%[1]s view-secret <secret> -k/--kubeconfig <cfg>
+
 	# suppress info output
 	%[1]s view-secret <secret> -q/--quiet
 `
@@ -46,14 +49,18 @@ var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
 // ErrSecretEmpty is thrown when there's no data in the secret
 var ErrSecretEmpty = errors.New("secret is empty")
 
+// ErrInsufficientArgs is thrown if arg len <1 or >2
+var ErrInsufficientArgs = fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
+
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
 	customNamespace string
 	customContext   string
 	decodeAll       bool
-	quiet           bool
+	kubeConfig      string
 	secretName      string
 	secretKey       string
+	quiet           bool
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
@@ -81,6 +88,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
 	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
 	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
+	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
 
 	return cmd
 }
@@ -89,7 +97,7 @@ func NewCmdViewSecret() *cobra.Command {
 func (c *CommandOpts) Validate(args []string) error {
 	argLen := len(args)
 	if argLen < 1 || argLen > 2 {
-		return fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
+		return ErrInsufficientArgs
 	}
 
 	c.secretName = args[0]
@@ -104,6 +112,7 @@ func (c *CommandOpts) Validate(args []string) error {
 func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	nsOverride, _ := cmd.Flags().GetString("namespace")
 	ctxOverride, _ := cmd.Flags().GetString("context")
+	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
 
 	var res, cmdErr bytes.Buffer
 	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
@@ -113,6 +122,10 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 
 	if ctxOverride != "" {
 		commandArgs = append(commandArgs, "--context", ctxOverride)
+	}
+
+	if kubeConfigOverride != "" {
+		commandArgs = append(commandArgs, "--kubeconfig", kubeConfigOverride)
 	}
 
 	out := exec.Command("kubectl", commandArgs...)

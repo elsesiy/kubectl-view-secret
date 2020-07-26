@@ -13,7 +13,8 @@ import (
 	"github.com/magiconair/properties/assert"
 )
 
-var testSecret = `
+const (
+	testSecret = `
 {
     "data": {
 		"TEST_CONN_STR": "bW9uZ29kYjovL215REJSZWFkZXI6RDFmZmljdWx0UCU0MHNzdzByZEBtb25nb2RiMC5leGFtcGxlLmNvbToyNzAxNy8/YXV0aFNvdXJjZT1hZG1pbg==",
@@ -22,16 +23,38 @@ var testSecret = `
     }
 }
 `
-
-var testSecretSingle = `
+	testSecretSingle = `
 {
     "data": {
         "SINGLE_PASSWORD": "c2VjcmV0Cg=="
     }
 }
 `
+	testSecretEmpty = "{}"
+)
 
-var testSecretEmpty = "{}"
+func TestValidate(t *testing.T) {
+	opts := CommandOpts{}
+	tests := map[string]struct {
+		opts CommandOpts
+		args []string
+		err  error
+	}{
+		"args insufficient length": {opts, []string{}, ErrInsufficientArgs},
+		"valid args":               {opts, []string{"test", "key"}, nil},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := test.opts.Validate(test.args)
+			want := test.err
+			if got != want {
+				t.Errorf("got %v, want %v", got, want)
+			}
+		})
+	}
+
+}
 
 func TestProcessSecret(t *testing.T) {
 	var secret, secretSingle, secretEmpty map[string]interface{}

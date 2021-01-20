@@ -20,7 +20,7 @@ Instead you can now do:
     kubectl view-secret <secret> <key>
     
     # decode all contents
-    kubeclt view-secret <secret> -a/--all
+    kubectl view-secret <secret> -a/--all
     
     # print keys for secret in different namespace
     kubectl view-secret <secret> -n/--namespace <ns>

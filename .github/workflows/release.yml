@@ -1,3 +1,4 @@
+---
 name: release
 on:
   push:
@@ -15,7 +16,7 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.15
+        go-version: '^1.16'
     - name: GoReleaser
       uses: goreleaser/goreleaser-action@v2
       with:
@@ -24,4 +25,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Update new version in krew-index
-      uses: rajatjindal/krew-release-bot@v0.0.38
+      uses: rajatjindal/krew-release-bot@v0.0.39

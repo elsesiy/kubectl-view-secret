@@ -38,9 +38,21 @@ spec:
     bin: kubectl-view-secret
   - selector:
       matchLabels:
+        os: darwin
+        arch: arm64
+    {{addURIAndSha "https://github.com/elsesiy/kubectl-view-secret/releases/download/{{ .TagName }}/kubectl-view-secret_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
+    bin: kubectl-view-secret
+  - selector:
+      matchLabels:
         os: linux
         arch: amd64
     {{addURIAndSha "https://github.com/elsesiy/kubectl-view-secret/releases/download/{{ .TagName }}/kubectl-view-secret_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
+    bin: kubectl-view-secret
+  - selector:
+      matchLabels:
+        os: linux
+        arch: arm64
+    {{addURIAndSha "https://github.com/elsesiy/kubectl-view-secret/releases/download/{{ .TagName }}/kubectl-view-secret_{{ .TagName }}_linux_arm64.tar.gz" .TagName }}
     bin: kubectl-view-secret
   - selector:
       matchLabels:

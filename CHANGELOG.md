@@ -1,6 +1,29 @@
 # Changelog
 
-## [v0.6.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.6.0) (2020-07-25)
+## [0.8.1](https://github.com/elsesiy/kubectl-view-secret/tree/0.8.1) (2021-05-22)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.0...0.8.1)
+
+**Closed issues:**
+
+- Error while installing in Apple M1 chip [\#22](https://github.com/elsesiy/kubectl-view-secret/issues/22)
+- Missing darwin\_arm64 binary [\#21](https://github.com/elsesiy/kubectl-view-secret/issues/21)
+- Update to go1.16 [\#18](https://github.com/elsesiy/kubectl-view-secret/issues/18)
+
+## [v0.8.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.8.0) (2021-04-09)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.7.0...v0.8.0)
+
+## [v0.7.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.7.0) (2020-11-19)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.6.0...v0.7.0)
+
+**Closed issues:**
+
+- Update to go1.15 [\#15](https://github.com/elsesiy/kubectl-view-secret/issues/15)
+- Migrate to GitHub Actions [\#13](https://github.com/elsesiy/kubectl-view-secret/issues/13)
+
+## [v0.6.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.6.0) (2020-07-26)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.5.0...v0.6.0)
 

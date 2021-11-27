@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/elsesiy/kubectl-view-secret/pkg/cmd"
 	"os"
+
+	"github.com/elsesiy/kubectl-view-secret/pkg/cmd"
 )
 
 func main() {

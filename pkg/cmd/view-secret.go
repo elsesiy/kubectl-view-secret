@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"sort"
 
 	"github.com/spf13/cobra"
 )
@@ -156,10 +157,16 @@ func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}
 		return ErrSecretEmpty
 	}
 
+	var keys []string
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
 	if decodeAll {
-		for k, v := range data {
-			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
-			_, _ = fmt.Fprintf(outWriter, "%s=%s\n\n", k, b64d)
+		for _, k := range keys {
+			b64d, _ := base64.StdEncoding.DecodeString(data[k].(string))
+			_, _ = fmt.Fprintf(outWriter, "%s=%s\n", k, b64d)
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {

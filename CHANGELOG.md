@@ -1,8 +1,17 @@
 # Changelog
 
-## [0.8.1](https://github.com/elsesiy/kubectl-view-secret/tree/0.8.1) (2021-05-22)
+## [0.9.0](https://github.com/elsesiy/kubectl-view-secret/tree/0.9.0) (2021-11-26)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.0...0.8.1)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.1...0.9.0)
+
+**Closed issues:**
+
+- Update to go1.17 [\#24](https://github.com/elsesiy/kubectl-view-secret/issues/24)
+- support sort values and do not print empty lines [\#20](https://github.com/elsesiy/kubectl-view-secret/issues/20)
+
+## [v0.8.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.8.1) (2021-05-23)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.0...v0.8.1)
 
 **Closed issues:**
 

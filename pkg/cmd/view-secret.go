@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +11,7 @@ import (
 	"os/exec"
 	"sort"
 
+	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
 )
 

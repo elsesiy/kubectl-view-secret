@@ -3,13 +3,13 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/goccy/go-json"
 	"github.com/magiconair/properties/assert"
 )
 

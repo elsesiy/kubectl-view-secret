@@ -1,8 +1,17 @@
 # Changelog
 
-## [0.9.0](https://github.com/elsesiy/kubectl-view-secret/tree/0.9.0) (2021-11-26)
+## [0.9.1](https://github.com/elsesiy/kubectl-view-secret/tree/0.9.1) (2022-04-27)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.1...0.9.0)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.9.0...0.9.1)
+
+**Closed issues:**
+
+- Replace encoding/json [\#27](https://github.com/elsesiy/kubectl-view-secret/issues/27)
+- Update to go1.18 [\#26](https://github.com/elsesiy/kubectl-view-secret/issues/26)
+
+## [v0.9.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.9.0) (2021-11-27)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.1...v0.9.0)
 
 **Closed issues:**
 

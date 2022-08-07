@@ -1,8 +1,25 @@
 # Changelog
 
-## [0.9.1](https://github.com/elsesiy/kubectl-view-secret/tree/0.9.1) (2022-04-27)
+## [Unreleased](https://github.com/elsesiy/kubectl-view-secret/tree/HEAD)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.9.0...0.9.1)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.0...HEAD)
+
+**Closed issues:**
+
+- Improve CI setup [\#31](https://github.com/elsesiy/kubectl-view-secret/issues/31)
+- Update to go1.19 [\#30](https://github.com/elsesiy/kubectl-view-secret/issues/30)
+
+## [v0.10.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.10.0) (2022-08-07)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.9.1...v0.10.0)
+
+**Closed issues:**
+
+- AUR package [\#28](https://github.com/elsesiy/kubectl-view-secret/issues/28)
+
+## [v0.9.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.9.1) (2022-04-28)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.9.0...v0.9.1)
 
 **Closed issues:**
 

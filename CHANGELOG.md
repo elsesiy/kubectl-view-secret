@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/elsesiy/kubectl-view-secret/tree/HEAD)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.0...HEAD)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.1...HEAD)
+
+**Closed issues:**
+
+- Bump dependencies [\#33](https://github.com/elsesiy/kubectl-view-secret/issues/33)
+
+## [v0.10.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.10.1) (2022-12-18)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.0...v0.10.1)
 
 **Closed issues:**
 

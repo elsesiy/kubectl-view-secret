@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"sort"
@@ -85,9 +84,11 @@ func NewCmdViewSecret() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
+	cmd.Flags().
+		BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
 	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
-	cmd.Flags().StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
+	cmd.Flags().
+		StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
 	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
 	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
 
@@ -144,7 +145,7 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	}
 
 	if c.quiet {
-		return ProcessSecret(os.Stdout, ioutil.Discard, secret, c.secretKey, c.decodeAll)
+		return ProcessSecret(os.Stdout, io.Discard, secret, c.secretKey, c.decodeAll)
 	}
 
 	return ProcessSecret(os.Stdout, os.Stderr, secret, c.secretKey, c.decodeAll)

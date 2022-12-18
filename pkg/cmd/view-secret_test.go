@@ -53,7 +53,6 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestProcessSecret(t *testing.T) {
@@ -70,12 +69,39 @@ func TestProcessSecret(t *testing.T) {
 		decodeAll  bool
 		err        error
 	}{
-		"view-secret <secret>":            {secret, []string{"-> TEST_CONN_STR", "-> TEST_PASSWORD", "-> TEST_PASSWORD_2"}, []string{listDescription}, "", false, nil},
-		"view-secret <secret-single-key>": {secretSingle, []string{"secret"}, []string{fmt.Sprintf(singleKeyDescription, "SINGLE_PASSWORD")}, "", false, nil},
-		"view-secret test TEST_PASSWORD":  {secret, []string{"secret"}, nil, "TEST_PASSWORD", false, nil},
-		"view-secret test -a":             {secret, []string{"", "", "TEST_CONN_STR=mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin", "TEST_PASSWORD=secret", "TEST_PASSWORD_2=verysecret"}, nil, "", true, nil},
-		"view-secret test NONE":           {secret, nil, nil, "NONE", false, ErrSecretKeyNotFound},
-		"view-secret <secret-empty>":      {secretEmpty, nil, nil, "", false, ErrSecretEmpty},
+		"view-secret <secret>": {
+			secret,
+			[]string{"-> TEST_CONN_STR", "-> TEST_PASSWORD", "-> TEST_PASSWORD_2"},
+			[]string{listDescription},
+			"",
+			false,
+			nil,
+		},
+		"view-secret <secret-single-key>": {
+			secretSingle,
+			[]string{"secret"},
+			[]string{fmt.Sprintf(singleKeyDescription, "SINGLE_PASSWORD")},
+			"",
+			false,
+			nil,
+		},
+		"view-secret test TEST_PASSWORD": {secret, []string{"secret"}, nil, "TEST_PASSWORD", false, nil},
+		"view-secret test -a": {
+			secret,
+			[]string{
+				"",
+				"",
+				"TEST_CONN_STR=mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin",
+				"TEST_PASSWORD=secret",
+				"TEST_PASSWORD_2=verysecret",
+			},
+			nil,
+			"",
+			true,
+			nil,
+		},
+		"view-secret test NONE":      {secret, nil, nil, "NONE", false, ErrSecretKeyNotFound},
+		"view-secret <secret-empty>": {secretEmpty, nil, nil, "", false, ErrSecretEmpty},
 	}
 
 	for name, test := range tests {
@@ -109,7 +135,6 @@ func TestProcessSecret(t *testing.T) {
 					t.Errorf("got %v, want %v", gotStdErrArr, test.wantStdErr)
 				}
 			}
-
 		})
 	}
 }

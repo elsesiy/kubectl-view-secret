@@ -82,7 +82,7 @@ func NewCmdViewSecret() *cobra.Command {
 
 			return nil
 		},
-		ValidArgsFunction: getSecrets,
+		ValidArgsFunction: getSecretsOrKeys,
 	}
 
 	cmd.Flags().
@@ -241,11 +241,21 @@ func getNamespaces(cmd *cobra.Command, args []string, toComplete string) ([]stri
 	return namespaces, cobra.ShellCompDirectiveNoFileComp
 }
 
-func getSecrets(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	if len(args) > 0 {
-		return nil, cobra.ShellCompDirectiveNoFileComp
+func getSecretsOrKeys(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// The first argument is the secret name.
+	if len(args) == 0 {
+		return getSecrets(cmd, args, toComplete)
 	}
 
+	// The second argument is the key.
+	if len(args) == 1 {
+		return getSecretKeys(cmd, args, toComplete)
+	}
+
+	return nil, cobra.ShellCompDirectiveNoFileComp
+}
+
+func getSecrets(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	nsOverride, _ := cmd.Flags().GetString("namespace")
 	ctxOverride, _ := cmd.Flags().GetString("context")
 	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
@@ -290,4 +300,60 @@ func getSecrets(cmd *cobra.Command, args []string, toComplete string) ([]string,
 	}
 
 	return names, cobra.ShellCompDirectiveNoFileComp
+}
+
+func getSecretKeys(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// We are now completing the second argument, the key:
+	//
+	//    kubectl view-secret example-secret <TAB><TAB>
+	//                        <------------> <-------->
+	//                            args[0]    toComplete
+	//
+
+	if len(args) != 1 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	secretName := args[0]
+
+	nsOverride, _ := cmd.Flags().GetString("namespace")
+	ctxOverride, _ := cmd.Flags().GetString("context")
+	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
+
+	var res, cmdErr bytes.Buffer
+	commandArgs := []string{"get", "secrets", secretName, "-o", "json"}
+	if nsOverride != "" {
+		commandArgs = append(commandArgs, "-n", nsOverride)
+	}
+
+	if ctxOverride != "" {
+		commandArgs = append(commandArgs, "--context", ctxOverride)
+	}
+
+	if kubeConfigOverride != "" {
+		commandArgs = append(commandArgs, "--kubeconfig", kubeConfigOverride)
+	}
+
+	out := exec.Command("kubectl", commandArgs...)
+	out.Stdout = &res
+	out.Stderr = &cmdErr
+	err := out.Run()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var parsed struct {
+		Data map[string]string `json:"data,omitempty"`
+	}
+
+	if err := json.Unmarshal(res.Bytes(), &parsed); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var keys []string
+	for k := range parsed.Data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return keys, cobra.ShellCompDirectiveNoFileComp
 }

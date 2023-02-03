@@ -82,6 +82,7 @@ func NewCmdViewSecret() *cobra.Command {
 
 			return nil
 		},
+		ValidArgsFunction: getSecrets,
 	}
 
 	cmd.Flags().
@@ -92,6 +93,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
 	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
 
+	cmd.Root().RegisterFlagCompletionFunc("namespace", getNamespaces)
 	return cmd
 }
 
@@ -190,4 +192,102 @@ func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}
 	}
 
 	return nil
+}
+
+func getNamespaces(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	ctxOverride, _ := cmd.Flags().GetString("context")
+	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
+
+	var res, cmdErr bytes.Buffer
+	commandArgs := []string{"get", "namespaces", "-o", "json"}
+
+	if ctxOverride != "" {
+		commandArgs = append(commandArgs, "--context", ctxOverride)
+	}
+
+	if kubeConfigOverride != "" {
+		commandArgs = append(commandArgs, "--kubeconfig", kubeConfigOverride)
+	}
+
+	out := exec.Command("kubectl", commandArgs...)
+	out.Stdout = &res
+	out.Stderr = &cmdErr
+	err := out.Run()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var parsed struct {
+		Items []struct {
+			Metadata struct {
+				Name string `json:"name"`
+			} `json:"metadata,omitempty"`
+		}
+	}
+	if err := json.Unmarshal(res.Bytes(), &parsed); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	// turn into a list of strings
+	var namespaces []string
+	for _, item := range parsed.Items {
+		namespaces = append(namespaces, item.Metadata.Name)
+	}
+
+	return namespaces, cobra.ShellCompDirectiveNoFileComp
+}
+
+func getSecrets(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	nsOverride, _ := cmd.Flags().GetString("namespace")
+	ctxOverride, _ := cmd.Flags().GetString("context")
+	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
+
+	var res, cmdErr bytes.Buffer
+	commandArgs := []string{"get", "secrets", "-o", "json"}
+	if nsOverride != "" {
+		commandArgs = append(commandArgs, "-n", nsOverride)
+	}
+
+	if ctxOverride != "" {
+		commandArgs = append(commandArgs, "--context", ctxOverride)
+	}
+
+	if kubeConfigOverride != "" {
+		commandArgs = append(commandArgs, "--kubeconfig", kubeConfigOverride)
+	}
+
+	out := exec.Command("kubectl", commandArgs...)
+	out.Stdout = &res
+	out.Stderr = &cmdErr
+	err := out.Run()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var parsed struct {
+		Items []struct {
+			Metadata struct {
+				Name string `json:"name"`
+			} `json:"metadata,omitempty"`
+		}
+	}
+	if err := json.Unmarshal(res.Bytes(), &parsed); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	// turn into a list of strings
+	var names []string
+	for _, item := range parsed.Items {
+		names = append(names, item.Metadata.Name)
+	}
+
+	return names, cobra.ShellCompDirectiveNoFileComp
 }

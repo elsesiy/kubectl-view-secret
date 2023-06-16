@@ -168,7 +168,7 @@ func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}
 	if decodeAll {
 		for _, k := range keys {
 			b64d, _ := base64.StdEncoding.DecodeString(data[k].(string))
-			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, strings.TrimSpace(string(b64d)))
+			_, _ = fmt.Fprintf(outWriter, "%s='%s' ", k, strings.TrimSpace(string(b64d)))
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {

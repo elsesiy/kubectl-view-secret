@@ -1,11 +1,11 @@
 module github.com/elsesiy/kubectl-view-secret
 
-go 1.19
+go 1.20
 
 require (
-	github.com/goccy/go-json v0.10.0
+	github.com/goccy/go-json v0.10.2
 	github.com/magiconair/properties v1.8.7
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 )
 
 require (

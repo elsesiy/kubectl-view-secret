@@ -7,7 +7,7 @@ jobs:
     name: test
     runs-on: ubuntu-22.04
     container:
-      image: golang:1.19
+      image: golang:1.20
     steps:
       - name: Checkout
         uses: actions/checkout@v3

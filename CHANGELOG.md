@@ -1,12 +1,19 @@
 # Changelog
 
-## [Unreleased](https://github.com/elsesiy/kubectl-view-secret/tree/HEAD)
+## [v0.11.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.11.0) (2023-06-26)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.1...HEAD)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.1...v0.11.0)
 
 **Closed issues:**
 
+- Update to go1.20 [\#37](https://github.com/elsesiy/kubectl-view-secret/issues/37)
 - Bump dependencies [\#33](https://github.com/elsesiy/kubectl-view-secret/issues/33)
+- use escape characters while printing secret values [\#32](https://github.com/elsesiy/kubectl-view-secret/issues/32)
+
+**Merged pull requests:**
+
+- Update go toolchain to 1.20 [\#38](https://github.com/elsesiy/kubectl-view-secret/pull/38) ([elsesiy](https://github.com/elsesiy))
+- Add quotes to secret values [\#36](https://github.com/elsesiy/kubectl-view-secret/pull/36) ([pradeepnnv](https://github.com/pradeepnnv))
 
 ## [v0.10.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.10.1) (2022-12-18)
 
@@ -17,6 +24,10 @@
 - Improve CI setup [\#31](https://github.com/elsesiy/kubectl-view-secret/issues/31)
 - Update to go1.19 [\#30](https://github.com/elsesiy/kubectl-view-secret/issues/30)
 
+**Merged pull requests:**
+
+- Bump dependencies & update fmt \(gofumpt, yaml\) [\#34](https://github.com/elsesiy/kubectl-view-secret/pull/34) ([elsesiy](https://github.com/elsesiy))
+
 ## [v0.10.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.10.0) (2022-08-07)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.9.1...v0.10.0)
@@ -24,6 +35,10 @@
 **Closed issues:**
 
 - AUR package [\#28](https://github.com/elsesiy/kubectl-view-secret/issues/28)
+
+**Merged pull requests:**
+
+- Bump to go1.19, run CI in container [\#29](https://github.com/elsesiy/kubectl-view-secret/pull/29) ([elsesiy](https://github.com/elsesiy))
 
 ## [v0.9.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.9.1) (2022-04-28)
 
@@ -43,6 +58,10 @@
 - Update to go1.17 [\#24](https://github.com/elsesiy/kubectl-view-secret/issues/24)
 - support sort values and do not print empty lines [\#20](https://github.com/elsesiy/kubectl-view-secret/issues/20)
 
+**Merged pull requests:**
+
+- Improve multi-secret outputs [\#23](https://github.com/elsesiy/kubectl-view-secret/pull/23) ([elsesiy](https://github.com/elsesiy))
+
 ## [v0.8.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.8.1) (2021-05-23)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.8.0...v0.8.1)
@@ -57,6 +76,11 @@
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.7.0...v0.8.0)
 
+**Merged pull requests:**
+
+- update to go1.16 [\#19](https://github.com/elsesiy/kubectl-view-secret/pull/19) ([elsesiy](https://github.com/elsesiy))
+- fix typo. [\#17](https://github.com/elsesiy/kubectl-view-secret/pull/17) ([jiroshin](https://github.com/jiroshin))
+
 ## [v0.7.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.7.0) (2020-11-19)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.6.0...v0.7.0)
@@ -66,6 +90,11 @@
 - Update to go1.15 [\#15](https://github.com/elsesiy/kubectl-view-secret/issues/15)
 - Migrate to GitHub Actions [\#13](https://github.com/elsesiy/kubectl-view-secret/issues/13)
 
+**Merged pull requests:**
+
+- update to go1.15 [\#16](https://github.com/elsesiy/kubectl-view-secret/pull/16) ([elsesiy](https://github.com/elsesiy))
+- add GitHub Action for ci/release [\#14](https://github.com/elsesiy/kubectl-view-secret/pull/14) ([elsesiy](https://github.com/elsesiy))
+
 ## [v0.6.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.6.0) (2020-07-26)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.5.0...v0.6.0)
@@ -73,6 +102,10 @@
 **Closed issues:**
 
 - Add kubeconfig option [\#11](https://github.com/elsesiy/kubectl-view-secret/issues/11)
+
+**Merged pull requests:**
+
+- Add support for custom kubeconfig [\#12](https://github.com/elsesiy/kubectl-view-secret/pull/12) ([elsesiy](https://github.com/elsesiy))
 
 ## [v0.5.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.5.0) (2020-03-21)
 
@@ -97,6 +130,10 @@
 **Closed issues:**
 
 - Problem with docs [\#2](https://github.com/elsesiy/kubectl-view-secret/issues/2)
+
+**Merged pull requests:**
+
+- Add support for custom context [\#6](https://github.com/elsesiy/kubectl-view-secret/pull/6) ([elsesiy](https://github.com/elsesiy))
 
 ## [v0.3.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.3.0) (2019-10-26)
 

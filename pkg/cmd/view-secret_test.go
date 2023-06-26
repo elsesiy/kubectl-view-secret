@@ -89,11 +89,9 @@ func TestProcessSecret(t *testing.T) {
 		"view-secret test -a": {
 			secret,
 			[]string{
-				"",
-				"",
-				"TEST_CONN_STR=mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin",
-				"TEST_PASSWORD=secret",
-				"TEST_PASSWORD_2=verysecret",
+				"TEST_CONN_STR='mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin'",
+				"TEST_PASSWORD='secret'",
+				"TEST_PASSWORD_2='verysecret'",
 			},
 			nil,
 			"",

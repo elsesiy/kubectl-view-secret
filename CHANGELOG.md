@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.12.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.12.0) (2024-02-25)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.11.0...v0.12.0)
+
+**Closed issues:**
+
+- Update to go1.22 [\#40](https://github.com/elsesiy/kubectl-view-secret/issues/40)
+
+**Merged pull requests:**
+
+- Update go toolchain to 1.22, bump dependencies [\#41](https://github.com/elsesiy/kubectl-view-secret/pull/41) ([elsesiy](https://github.com/elsesiy))
+- Add support for impersonating a user or service account with flag [\#39](https://github.com/elsesiy/kubectl-view-secret/pull/39) ([cnmcavoy](https://github.com/cnmcavoy))
+
 ## [v0.11.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.11.0) (2023-06-26)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.10.1...v0.11.0)

@@ -63,6 +63,7 @@ type CommandOpts struct {
 	secretKey       string
 	quiet           bool
 	impersonateAs   string
+	impersonateAsGroups   string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
@@ -94,6 +95,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
 	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
 	cmd.Flags().StringVar(&res.impersonateAs, "as", res.impersonateAs, "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
+	cmd.Flags().StringVar(&res.impersonateAsGroups, "as-group", res.impersonateAsGroups, "Groups to impersonate for the operation. Multipe groups can be specified by comma separated.")
 
 	return cmd
 }
@@ -119,6 +121,7 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	ctxOverride, _ := cmd.Flags().GetString("context")
 	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
 	impersonateOverride, _ := cmd.Flags().GetString("as")
+	impersonateGroupOverride, _ := cmd.Flags().GetString("as-group")
 
 	var res, cmdErr bytes.Buffer
 	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
@@ -136,6 +139,10 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 
 	if impersonateOverride != "" {
 		commandArgs = append(commandArgs, "--as", impersonateOverride)
+	}
+
+	if impersonateGroupOverride != "" {
+		commandArgs = append(commandArgs, "--as-group", impersonateGroupOverride)
 	}
 
 	out := exec.Command("kubectl", commandArgs...)

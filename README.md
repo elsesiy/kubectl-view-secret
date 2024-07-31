@@ -38,7 +38,7 @@ Instead you can now do:
 
 ### Krew
 
-This plugin is available through [krew](https://krew.dev) via :
+This plugin is available through [krew](https://krew.dev) via:
 
 ```sh
 kubectl krew install view-secret

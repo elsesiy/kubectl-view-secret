@@ -55,15 +55,15 @@ var ErrInsufficientArgs = fmt.Errorf("\nincorrect number or arguments, see --hel
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
-	customNamespace string
-	customContext   string
-	decodeAll       bool
-	kubeConfig      string
-	secretName      string
-	secretKey       string
-	quiet           bool
-	impersonateAs   string
-	impersonateAsGroups   string
+	customContext       string
+	customNamespace     string
+	decodeAll           bool
+	impersonateAs       string
+	impersonateAsGroups string
+	kubeConfig          string
+	quiet               bool
+	secretKey           string
+	secretName          string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed

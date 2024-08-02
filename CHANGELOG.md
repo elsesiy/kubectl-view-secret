@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.12.1](https://github.com/elsesiy/kubectl-view-secret/tree/0.12.1) (2024-08-02)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.12.0...0.12.1)
+
+**Closed issues:**
+
+- Add support for impersonating groups with flag [\#42](https://github.com/elsesiy/kubectl-view-secret/issues/42)
+
+**Merged pull requests:**
+
+- Bump dependencies & fix formatting [\#46](https://github.com/elsesiy/kubectl-view-secret/pull/46) ([elsesiy](https://github.com/elsesiy))
+- Ease copy past of install command [\#45](https://github.com/elsesiy/kubectl-view-secret/pull/45) ([Ph0tonic](https://github.com/Ph0tonic))
+- Issue-42 Adding support for impersonating groups with flag --as-group [\#43](https://github.com/elsesiy/kubectl-view-secret/pull/43) ([pratikkumar-mohite](https://github.com/pratikkumar-mohite))
+
 ## [v0.12.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.12.0) (2024-02-25)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.11.0...v0.12.0)

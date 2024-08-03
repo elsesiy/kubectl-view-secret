@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/huh"
 	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
 )
@@ -39,9 +40,11 @@ const (
 	%[1]s view-secret <secret> -q/--quiet
 `
 
-	singleKeyDescription = "Choosing key: %[1]s"
-	listDescription      = "Multiple sub keys found. Specify another argument, one of:"
-	listPrefix           = "->"
+	secretDescription     = "Found %d keys in secret %q. Choose one or select 'all' to view."
+	secretListDescription = "Multiple (%d) secrets found. Choose one."
+	secretListTitle       = "Available Secrets"
+	secretTitle           = "Secret Data"
+	singleKeyDescription  = "Viewing only available key: %[1]s"
 )
 
 // ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
@@ -103,13 +106,16 @@ func NewCmdViewSecret() *cobra.Command {
 // Validate ensures proper command usage
 func (c *CommandOpts) Validate(args []string) error {
 	argLen := len(args)
-	if argLen < 1 || argLen > 2 {
-		return ErrInsufficientArgs
-	}
-
-	c.secretName = args[0]
-	if argLen == 2 {
+	switch argLen {
+	case 1:
+		c.secretName = args[0]
+	case 2:
+		c.secretName = args[0]
 		c.secretKey = args[1]
+	default:
+		if argLen < 0 || argLen > 2 {
+			return ErrInsufficientArgs
+		}
 	}
 
 	return nil
@@ -124,7 +130,12 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	impersonateGroupOverride, _ := cmd.Flags().GetString("as-group")
 
 	var res, cmdErr bytes.Buffer
-	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
+
+	commandArgs := []string{"get", "secret", "-o", "json"}
+	if c.secretName != "" {
+		commandArgs = []string{"get", "secret", c.secretName, "-o", "json"}
+	}
+
 	if nsOverride != "" {
 		commandArgs = append(commandArgs, "-n", nsOverride)
 	}
@@ -154,9 +165,35 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 		return nil
 	}
 
-	var secret map[string]interface{}
-	if err := json.Unmarshal(res.Bytes(), &secret); err != nil {
-		return err
+	var secret Secret
+	if c.secretName == "" {
+		var secretList SecretList
+		if err := json.Unmarshal(res.Bytes(), &secretList); err != nil {
+			return err
+		}
+
+		opts := []string{}
+		secretMap := map[string]Secret{}
+		for _, v := range secretList.Items {
+			opts = append(opts, v.Metadata.Name)
+			secretMap[v.Metadata.Name] = v
+		}
+
+		err := huh.NewSelect[string]().
+			Title(secretListTitle).
+			Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
+			Options(huh.NewOptions[string](opts...)...).
+			Value(&c.secretName).
+			Run()
+		if err != nil {
+			return err
+		}
+
+		secret = secretMap[c.secretName]
+	} else {
+		if err := json.Unmarshal(res.Bytes(), &secret); err != nil {
+			return err
+		}
 	}
 
 	if c.quiet {
@@ -167,41 +204,58 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 }
 
 // ProcessSecret takes the secret and user input to determine the output
-func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
-	data, ok := secret["data"].(map[string]interface{})
-	if !ok {
+func ProcessSecret(outWriter, errWriter io.Writer, secret Secret, secretKey string, decodeAll bool) error {
+	data := secret.Data
+	if len(data) == 0 {
 		return ErrSecretEmpty
 	}
 
 	var keys []string
-	for k := range data {
+	for k := range secret.Data {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	if decodeAll {
 		for _, k := range keys {
-			b64d, _ := base64.StdEncoding.DecodeString(data[k].(string))
+			b64d, _ := base64.StdEncoding.DecodeString(data[k])
 			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, strings.TrimSpace(string(b64d)))
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
-			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v)
 			_, _ = fmt.Fprint(outWriter, string(b64d))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
-			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
+			b64d, _ := base64.StdEncoding.DecodeString(v)
 			_, _ = fmt.Fprint(outWriter, string(b64d))
 		} else {
 			return ErrSecretKeyNotFound
 		}
 	} else {
-		_, _ = fmt.Fprintln(errWriter, listDescription)
+		opts := []string{"all"}
 		for k := range data {
-			_, _ = fmt.Fprintf(outWriter, "%s %s\n", listPrefix, k)
+			opts = append(opts, k)
 		}
+
+		var selection string
+		err := huh.NewSelect[string]().
+			Title(secretTitle).
+			Description(fmt.Sprintf(secretDescription, len(data), secret.Metadata.Name)).
+			Options(huh.NewOptions(opts...)...).
+			Value(&selection).
+			Run()
+		if err != nil {
+			return err
+		}
+
+		if selection == "all" {
+			decodeAll = true
+		}
+
+		return ProcessSecret(outWriter, errWriter, secret, selection, decodeAll)
 	}
 
 	return nil

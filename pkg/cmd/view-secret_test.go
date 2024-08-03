@@ -72,7 +72,7 @@ func TestProcessSecret(t *testing.T) {
 		"view-secret <secret>": {
 			secret,
 			[]string{"-> TEST_CONN_STR", "-> TEST_PASSWORD", "-> TEST_PASSWORD_2"},
-			[]string{listDescription},
+			[]string{secretTitle},
 			"",
 			false,
 			nil,

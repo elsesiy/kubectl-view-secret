@@ -42,7 +42,7 @@ const (
 `
 
 	secretDescription     = "Found %d keys in secret %q. Choose one or select 'all' to view."
-	secretListDescription = "Multiple (%d) secrets found. Choose one."
+	secretListDescription = "Found %d secrets. Choose one."
 	secretListTitle       = "Available Secrets"
 	secretTitle           = "Secret Data"
 	singleKeyDescription  = "Viewing only available key: %[1]s"

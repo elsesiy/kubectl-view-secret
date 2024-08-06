@@ -1,36 +1,26 @@
 package cmd
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"reflect"
-	"sort"
 	"strings"
 	"testing"
 
-	"github.com/goccy/go-json"
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 )
 
-const (
-	testSecret = `
-{
-    "data": {
-		"TEST_CONN_STR": "bW9uZ29kYjovL215REJSZWFkZXI6RDFmZmljdWx0UCU0MHNzdzByZEBtb25nb2RiMC5leGFtcGxlLmNvbToyNzAxNy8/YXV0aFNvdXJjZT1hZG1pbg==",
-        "TEST_PASSWORD": "c2VjcmV0Cg==",
-		"TEST_PASSWORD_2": "dmVyeXNlY3JldAo="
-    }
-}
-`
-	testSecretSingle = `
-{
-    "data": {
-        "SINGLE_PASSWORD": "c2VjcmV0Cg=="
-    }
-}
-`
-	testSecretEmpty = "{}"
+var (
+	secret = SecretData{
+		"TEST_CONN_STR":   "bW9uZ29kYjovL215REJSZWFkZXI6RDFmZmljdWx0UCU0MHNzdzByZEBtb25nb2RiMC5leGFtcGxlLmNvbToyNzAxNy8/YXV0aFNvdXJjZT1hZG1pbg==",
+		"TEST_PASSWORD":   "c2VjcmV0Cg==",
+		"TEST_PASSWORD_2": "dmVyeXNlY3JldAo=",
+	}
+
+	secretSingle = SecretData{
+		"SINGLE_PASSWORD": "c2VjcmV0Cg==",
+	}
+
+	secretEmpty = SecretData{}
 )
 
 func TestValidate(t *testing.T) {
@@ -40,12 +30,14 @@ func TestValidate(t *testing.T) {
 		args []string
 		err  error
 	}{
-		"args insufficient length": {opts, []string{}, ErrInsufficientArgs},
+		"args insufficient length": {opts, []string{"1", "2", "3"}, ErrInsufficientArgs},
 		"valid args":               {opts, []string{"test", "key"}, nil},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			got := test.opts.Validate(test.args)
 			want := test.err
 			if got != want {
@@ -56,26 +48,27 @@ func TestValidate(t *testing.T) {
 }
 
 func TestProcessSecret(t *testing.T) {
-	var secret, secretSingle, secretEmpty map[string]interface{}
-	_ = json.Unmarshal([]byte(testSecret), &secret)
-	_ = json.Unmarshal([]byte(testSecretSingle), &secretSingle)
-	_ = json.Unmarshal([]byte(testSecretEmpty), &secretEmpty)
-
 	tests := map[string]struct {
-		secretData map[string]interface{}
+		secretData SecretData
 		wantStdOut []string
 		wantStdErr []string
 		secretKey  string
 		decodeAll  bool
 		err        error
+		feedkeys   string
 	}{
 		"view-secret <secret>": {
 			secret,
-			[]string{"-> TEST_CONN_STR", "-> TEST_PASSWORD", "-> TEST_PASSWORD_2"},
-			[]string{secretTitle},
+			[]string{
+				"TEST_CONN_STR='mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin'",
+				"TEST_PASSWORD='secret'",
+				"TEST_PASSWORD_2='verysecret'",
+			},
+			[]string{},
 			"",
 			false,
 			nil,
+			"\r", // selects 'all' as it's the default selection
 		},
 		"view-secret <secret-single-key>": {
 			secretSingle,
@@ -84,8 +77,9 @@ func TestProcessSecret(t *testing.T) {
 			"",
 			false,
 			nil,
+			"",
 		},
-		"view-secret test TEST_PASSWORD": {secret, []string{"secret"}, nil, "TEST_PASSWORD", false, nil},
+		"view-secret test TEST_PASSWORD": {secret, []string{"secret"}, nil, "TEST_PASSWORD", false, nil, ""},
 		"view-secret test -a": {
 			secret,
 			[]string{
@@ -97,40 +91,42 @@ func TestProcessSecret(t *testing.T) {
 			"",
 			true,
 			nil,
+			"",
 		},
-		"view-secret test NONE":      {secret, nil, nil, "NONE", false, ErrSecretKeyNotFound},
-		"view-secret <secret-empty>": {secretEmpty, nil, nil, "", false, ErrSecretEmpty},
+		"view-secret test NONE":      {secret, nil, nil, "NONE", false, ErrSecretKeyNotFound, ""},
+		"view-secret <secret-empty>": {secretEmpty, nil, nil, "", false, ErrSecretEmpty, ""},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotStdOut := bytes.Buffer{}
-			gotStdErr := bytes.Buffer{}
-			err := ProcessSecret(&gotStdOut, &gotStdErr, test.secretData, test.secretKey, test.decodeAll)
+			t.Parallel()
+
+			stdOutBuf := bytes.Buffer{}
+			stdErrBuf := bytes.Buffer{}
+			readBuf := strings.Reader{}
+
+			if test.feedkeys != "" {
+				readBuf = *strings.NewReader(test.feedkeys)
+			}
+
+			err := ProcessSecret(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData}, test.secretKey, test.decodeAll)
 
 			if test.err != nil {
 				assert.Equal(t, err, test.err)
 			} else {
-				var gotStdOutArr, gotStdErrArr []string
-				scanner := bufio.NewScanner(strings.NewReader(gotStdOut.String()))
-				for scanner.Scan() {
-					gotStdOutArr = append(gotStdOutArr, scanner.Text())
+				gotStdOut := stdOutBuf.String()
+				gotStdErr := stdErrBuf.String()
+
+				for _, s := range test.wantStdOut {
+					if !assert.Contains(t, gotStdOut, s) {
+						t.Errorf("got %v, want %v", gotStdOut, s)
+					}
 				}
 
-				scanner = bufio.NewScanner(strings.NewReader(gotStdErr.String()))
-				for scanner.Scan() {
-					gotStdErrArr = append(gotStdErrArr, scanner.Text())
-				}
-
-				sort.Strings(gotStdOutArr)
-				sort.Strings(gotStdErrArr)
-
-				if !reflect.DeepEqual(gotStdOutArr, test.wantStdOut) {
-					t.Errorf("got %v, want %v", gotStdOutArr, test.wantStdOut)
-				}
-
-				if !reflect.DeepEqual(gotStdErrArr, test.wantStdErr) {
-					t.Errorf("got %v, want %v", gotStdErrArr, test.wantStdErr)
+				for _, s := range test.wantStdErr {
+					if !assert.Contains(t, gotStdErr, s) {
+						t.Errorf("got %v, want %v", gotStdErr, s)
+					}
 				}
 			}
 		})

@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
@@ -47,14 +48,18 @@ const (
 	singleKeyDescription  = "Viewing only available key: %[1]s"
 )
 
-// ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
-var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
+var (
+	// ErrInsufficientArgs is thrown if arg len <1 or >2
+	ErrInsufficientArgs = fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
 
-// ErrSecretEmpty is thrown when there's no data in the secret
-var ErrSecretEmpty = errors.New("secret is empty")
+	// ErrNoSecretFound is thrown when no secret name was provided but we didn't find any secrets
+	ErrNoSecretFound = errors.New("no secrets found")
+	// ErrSecretEmpty is thrown when there's no data in the secret
+	ErrSecretEmpty = errors.New("secret is empty")
 
-// ErrInsufficientArgs is thrown if arg len <1 or >2
-var ErrInsufficientArgs = fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
+	// ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
+	ErrSecretKeyNotFound = errors.New("provided key not found in secret")
+)
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
@@ -172,6 +177,11 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 			return err
 		}
 
+		// Since we don't query valid namespaces, we'll avoid prompting the user to select a secret if we didn't retrieve any secrets
+		if len(secretList.Items) == 0 {
+			return ErrNoSecretFound
+		}
+
 		opts := []string{}
 		secretMap := map[string]Secret{}
 		for _, v := range secretList.Items {
@@ -182,7 +192,7 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 		err := huh.NewSelect[string]().
 			Title(secretListTitle).
 			Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
-			Options(huh.NewOptions[string](opts...)...).
+			Options(huh.NewOptions(opts...)...).
 			Value(&c.secretName).
 			Run()
 		if err != nil {
@@ -197,14 +207,14 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	}
 
 	if c.quiet {
-		return ProcessSecret(os.Stdout, io.Discard, secret, c.secretKey, c.decodeAll)
+		return ProcessSecret(os.Stdout, io.Discard, os.Stdin, secret, c.secretKey, c.decodeAll)
 	}
 
-	return ProcessSecret(os.Stdout, os.Stderr, secret, c.secretKey, c.decodeAll)
+	return ProcessSecret(os.Stdout, os.Stderr, os.Stdin, secret, c.secretKey, c.decodeAll)
 }
 
 // ProcessSecret takes the secret and user input to determine the output
-func ProcessSecret(outWriter, errWriter io.Writer, secret Secret, secretKey string, decodeAll bool) error {
+func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret Secret, secretKey string, decodeAll bool) error {
 	data := secret.Data
 	if len(data) == 0 {
 		return ErrSecretEmpty
@@ -241,12 +251,15 @@ func ProcessSecret(outWriter, errWriter io.Writer, secret Secret, secretKey stri
 		}
 
 		var selection string
-		err := huh.NewSelect[string]().
-			Title(secretTitle).
-			Description(fmt.Sprintf(secretDescription, len(data), secret.Metadata.Name)).
-			Options(huh.NewOptions(opts...)...).
-			Value(&selection).
-			Run()
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title(secretTitle).
+					Description(fmt.Sprintf(secretDescription, len(data), secret.Metadata.Name)).
+					Options(huh.NewOptions(opts...)...).
+					Value(&selection),
+			),
+		).WithProgramOptions(tea.WithInput(inputReader), tea.WithOutput(outWriter)).Run()
 		if err != nil {
 			return err
 		}
@@ -255,7 +268,7 @@ func ProcessSecret(outWriter, errWriter io.Writer, secret Secret, secretKey stri
 			decodeAll = true
 		}
 
-		return ProcessSecret(outWriter, errWriter, secret, selection, decodeAll)
+		return ProcessSecret(outWriter, errWriter, inputReader, secret, selection, decodeAll)
 	}
 
 	return nil

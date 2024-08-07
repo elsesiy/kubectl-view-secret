@@ -83,9 +83,7 @@ func NewCmdViewSecret() *cobra.Command {
 		SilenceUsage: true,
 		Use:          "view-secret [secret-name] [secret-key]",
 		RunE: func(c *cobra.Command, args []string) error {
-			if err := res.Validate(args); err != nil {
-				return err
-			}
+			res.ParseArgs(args)
 			if err := res.Retrieve(c); err != nil {
 				return err
 			}
@@ -107,8 +105,8 @@ func NewCmdViewSecret() *cobra.Command {
 	return cmd
 }
 
-// Validate ensures proper command usage
-func (c *CommandOpts) Validate(args []string) error {
+// ParseArgs serializes the user supplied program arguments
+func (c *CommandOpts) ParseArgs(args []string) {
 	argLen := len(args)
 	if argLen >= 1 {
 		c.secretName = args[0]
@@ -117,8 +115,6 @@ func (c *CommandOpts) Validate(args []string) error {
 			c.secretKey = args[1]
 		}
 	}
-
-	return nil
 }
 
 // Retrieve reads the kubeconfig and decodes the secret

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -23,30 +22,6 @@ var (
 
 	secretEmpty = SecretData{}
 )
-
-func TestValidate(t *testing.T) {
-	opts := CommandOpts{}
-	tests := map[string]struct {
-		opts CommandOpts
-		args []string
-		err  error
-	}{
-		"args insufficient length": {opts, []string{"1", "2", "3"}, errors.New("accepts 2 arg(s), received 3")},
-		"valid args":               {opts, []string{"test", "key"}, nil},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			got := test.opts.Validate(test.args)
-			want := test.err
-			if got != want {
-				t.Errorf("got %v, want %v", got, want)
-			}
-		})
-	}
-}
 
 func TestProcessSecret(t *testing.T) {
 	tests := map[string]struct {

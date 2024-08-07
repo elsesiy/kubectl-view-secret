@@ -9,7 +9,7 @@ import (
 
 var (
 	validSecretJson = `{
-		"apiVersion": "v1",
+    "apiVersion": "v1",
     "data": {
         "key1": "dmFsdWUxCg==",
         "key2": "dmFsdWUyCg=="
@@ -26,7 +26,7 @@ var (
 }`
 
 	emptySecretJson = `{
-		"apiVersion": "v1",
+    "apiVersion": "v1",
     "data": {},
     "kind": "Secret",
     "metadata": {

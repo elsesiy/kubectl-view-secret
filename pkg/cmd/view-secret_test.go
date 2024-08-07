@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -30,7 +31,7 @@ func TestValidate(t *testing.T) {
 		args []string
 		err  error
 	}{
-		"args insufficient length": {opts, []string{"1", "2", "3"}, ErrInsufficientArgs},
+		"args insufficient length": {opts, []string{"1", "2", "3"}, errors.New("accepts 2 arg(s), received 3")},
 		"valid args":               {opts, []string{"test", "key"}, nil},
 	}
 

@@ -49,11 +49,9 @@ const (
 )
 
 var (
-	// ErrInsufficientArgs is thrown if arg len <1 or >2
-	ErrInsufficientArgs = fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
-
 	// ErrNoSecretFound is thrown when no secret name was provided but we didn't find any secrets
 	ErrNoSecretFound = errors.New("no secrets found")
+
 	// ErrSecretEmpty is thrown when there's no data in the secret
 	ErrSecretEmpty = errors.New("secret is empty")
 
@@ -79,10 +77,11 @@ func NewCmdViewSecret() *cobra.Command {
 	res := &CommandOpts{}
 
 	cmd := &cobra.Command{
-		Use:          "view-secret [secret-name] [secret-key]",
-		Short:        "Decode a kubernetes secret by name & key in the current context/cluster/namespace",
+		Args:         cobra.RangeArgs(0, 2),
 		Example:      fmt.Sprintf(example, "kubectl"),
+		Short:        "Decode a kubernetes secret by name & key in the current context/cluster/namespace",
 		SilenceUsage: true,
+		Use:          "view-secret [secret-name] [secret-key]",
 		RunE: func(c *cobra.Command, args []string) error {
 			if err := res.Validate(args); err != nil {
 				return err
@@ -111,15 +110,11 @@ func NewCmdViewSecret() *cobra.Command {
 // Validate ensures proper command usage
 func (c *CommandOpts) Validate(args []string) error {
 	argLen := len(args)
-	switch argLen {
-	case 1:
+	if argLen >= 1 {
 		c.secretName = args[0]
-	case 2:
-		c.secretName = args[0]
-		c.secretKey = args[1]
-	default:
-		if argLen < 0 || argLen > 2 {
-			return ErrInsufficientArgs
+
+		if argLen == 2 {
+			c.secretKey = args[1]
 		}
 	}
 

@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -42,6 +44,52 @@ func TestParseArgs(t *testing.T) {
 			got := test.opts
 			if got != test.wantOpts {
 				t.Errorf("got %v, want %v", got, test.wantOpts)
+			}
+		})
+	}
+}
+
+func TestNewCmdViewSecret(t *testing.T) {
+	tests := map[string]struct {
+		args    []string
+		wantErr error
+	}{
+		"all":               {args: []string{"test", "--all"}},
+		"custom ctx":        {args: []string{"test", "--context", "gotest"}},
+		"custom kubecfg":    {args: []string{"test", "--kubeconfig", "cfg"}},
+		"custom ns":         {args: []string{"test", "--namespace", "bob"}},
+		"impersonate group": {args: []string{"test", "--as-group", "golovers"}},
+		"impersonate user":  {args: []string{"test", "--as", "gopher"}},
+		"quiet":             {args: []string{"test", "--all", "--quiet"}},
+		"unknown flag":      {args: []string{"--version"}, wantErr: errors.New("unknown flag: --version")},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			cmd := NewCmdViewSecret()
+			outBuf := bytes.NewBufferString("")
+
+			cmd.SetOut(outBuf)
+			cmd.SetArgs(tt.args)
+
+			err := cmd.Execute()
+			if err != nil {
+				if tt.wantErr == nil {
+					assert.Fail(t, "unexpected error", err)
+				} else if err.Error() != tt.wantErr.Error() {
+					assert.Equal(t, tt.wantErr, err)
+				}
+				return
+			} else if tt.wantErr != nil {
+				assert.Fail(t, "expected error, got nil", tt.wantErr)
+				return
+			}
+
+			_, err = io.ReadAll(outBuf)
+			if err != nil {
+				t.Fatal(err)
 			}
 		})
 	}

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -76,13 +78,13 @@ func TestSerialize(t *testing.T) {
 			err := json.Unmarshal([]byte(tt.input), &got)
 			if err != nil {
 				if tt.wantErr == nil {
-					t.Fatalf("unexpected error: %v", err)
+					assert.Fail(t, "unexpected error", err)
 				} else if err.Error() != tt.wantErr.Error() {
-					t.Errorf("expected error %v, got %v", tt.wantErr, err)
+					assert.Equal(t, tt.wantErr, err)
 				}
 				return
 			} else if tt.wantErr != nil {
-				t.Errorf("expected error %v, got nil", tt.wantErr)
+				assert.Fail(t, "expected error, got nil", tt.wantErr)
 				return
 			}
 

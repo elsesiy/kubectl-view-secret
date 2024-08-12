@@ -23,6 +23,30 @@ var (
 	secretEmpty = SecretData{}
 )
 
+func TestParseArgs(t *testing.T) {
+	opts := CommandOpts{}
+	tests := map[string]struct {
+		opts     CommandOpts
+		args     []string
+		wantOpts CommandOpts
+	}{
+		"one arg":  {opts, []string{"test"}, CommandOpts{secretName: "test"}},
+		"two args": {opts, []string{"test", "key"}, CommandOpts{secretName: "test", secretKey: "key"}},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			test.opts.ParseArgs(test.args)
+			got := test.opts
+			if got != test.wantOpts {
+				t.Errorf("got %v, want %v", got, test.wantOpts)
+			}
+		})
+	}
+}
+
 func TestProcessSecret(t *testing.T) {
 	tests := map[string]struct {
 		secretData SecretData

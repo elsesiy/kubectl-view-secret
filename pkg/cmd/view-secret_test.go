@@ -60,6 +60,7 @@ func TestNewCmdViewSecret(t *testing.T) {
 		"custom ns":         {args: []string{"test", "--namespace", "bob"}},
 		"impersonate group": {args: []string{"test", "--as-group", "golovers"}},
 		"impersonate user":  {args: []string{"test", "--as", "gopher"}},
+		"invalid arg count": {args: []string{"a", "b", "c"}, wantErr: errors.New("accepts between 0 and 2 arg(s), received 3")},
 		"quiet":             {args: []string{"test", "--all", "--quiet"}},
 		"unknown flag":      {args: []string{"--version"}, wantErr: errors.New("unknown flag: --version")},
 	}

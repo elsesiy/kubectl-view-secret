@@ -5,11 +5,16 @@ jobs:
   ci_job:
     name: test
     runs-on: ubuntu-22.04
-    container:
-      image: golang:1.22
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: kvs-test
+          install_only: true
+      - name: Prepare env
+        run: make bootstrap
       - name: Test
         run: make test
       - name: Generate coverage report

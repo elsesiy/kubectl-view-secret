@@ -180,12 +180,15 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 			secretMap[v.Metadata.Name] = v
 		}
 
-		err := huh.NewSelect[string]().
-			Title(secretListTitle).
-			Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
-			Options(huh.NewOptions(opts...)...).
-			Value(&c.secretName).
-			Run()
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title(secretListTitle).
+					Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
+					Options(huh.NewOptions(opts...)...).
+					Value(&c.secretName),
+			),
+		).WithProgramOptions(tea.WithInput(cmd.InOrStdin()), tea.WithOutput(cmd.OutOrStdout())).Run()
 		if err != nil {
 			return err
 		}
@@ -198,10 +201,10 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	}
 
 	if c.quiet {
-		return ProcessSecret(os.Stdout, io.Discard, os.Stdin, secret, c.secretKey, c.decodeAll)
+		return ProcessSecret(cmd.OutOrStdout(), io.Discard, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll)
 	}
 
-	return ProcessSecret(os.Stdout, os.Stderr, os.Stdin, secret, c.secretKey, c.decodeAll)
+	return ProcessSecret(cmd.OutOrStdout(), cmd.OutOrStderr(), cmd.InOrStdin(), secret, c.secretKey, c.decodeAll)
 }
 
 // ProcessSecret takes the secret and user input to determine the output

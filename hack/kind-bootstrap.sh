@@ -40,3 +40,31 @@ metadata:
   namespace: default
 type: Opaque
 EOF
+
+## 'another' namespace
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: another
+EOF
+
+## secret 'gopher' in namespace 'another' (single key)
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  foo: YmFy
+kind: Secret
+metadata:
+  name: gopher
+  namespace: another
+type: Opaque
+EOF
+
+## 'empty' namespace
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: empty
+EOF

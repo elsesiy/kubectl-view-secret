@@ -51,18 +51,25 @@ func TestParseArgs(t *testing.T) {
 
 func TestNewCmdViewSecret(t *testing.T) {
 	tests := map[string]struct {
-		args    []string
-		wantErr error
+		args     []string
+		feedkeys string
+		want     string
+		wantErr  error
 	}{
-		"all":               {args: []string{"test", "--all"}},
-		"custom ctx":        {args: []string{"test", "--context", "gotest"}},
-		"custom kubecfg":    {args: []string{"test", "--kubeconfig", "cfg"}},
-		"custom ns":         {args: []string{"test", "--namespace", "bob"}},
-		"impersonate group": {args: []string{"test", "--as-group", "golovers"}},
-		"impersonate user":  {args: []string{"test", "--as", "gopher"}},
-		"invalid arg count": {args: []string{"a", "b", "c"}, wantErr: errors.New("accepts between 0 and 2 arg(s), received 3")},
-		"quiet":             {args: []string{"test", "--all", "--quiet"}},
-		"unknown flag":      {args: []string{"--version"}, wantErr: errors.New("unknown flag: --version")},
+		"all":                        {args: []string{"test", "--all"}, want: `key1='value1'\nkey2='value2'`},
+		"custom ctx":                 {args: []string{"test", "--context", "gotest"}},
+		"custom kubecfg":             {args: []string{"test", "--kubeconfig", "cfg"}},
+		"custom ns (does not exist)": {args: []string{"test", "--namespace", "bob"}, want: `Error from server (NotFound): namespaces "bob" not found`},
+		"custom ns (no secret)":      {args: []string{"test", "--namespace", "another"}, want: `Error from server (NotFound): secrets "test" not found`},
+		"custom ns (valid secret)":   {args: []string{"gopher", "--namespace", "another"}, want: `Viewing only available key: foo\nbar`},
+		"impersonate group":          {args: []string{"test", "--as", "gopher"}},
+		"impersonate user & group":   {args: []string{"test", "--as", "gopher", "--as-group", "golovers"}},
+		// make bootstrap sources 2 test secrets in the default namespace, select the first one and print all values
+		"interactive":                       {args: []string{"--all"}, feedkeys: "\r", want: `key1='value1'\nkey2='value2'`},
+		"interactive custom ns (no secret)": {args: []string{"--namespace", "empty"}, wantErr: ErrNoSecretFound},
+		"invalid arg count":                 {args: []string{"a", "b", "c"}, wantErr: errors.New("accepts between 0 and 2 arg(s), received 3")},
+		"quiet":                             {args: []string{"test2", "--quiet"}, want: `value1`},
+		"unknown flag":                      {args: []string{"--version"}, wantErr: errors.New("unknown flag: --version")},
 	}
 
 	for name, tt := range tests {
@@ -71,8 +78,13 @@ func TestNewCmdViewSecret(t *testing.T) {
 
 			cmd := NewCmdViewSecret()
 			outBuf := bytes.NewBufferString("")
+			readBuf := &strings.Reader{}
+			if tt.feedkeys != "" {
+				readBuf = strings.NewReader(tt.feedkeys)
+			}
 
 			cmd.SetOut(outBuf)
+			cmd.SetIn(readBuf)
 			cmd.SetArgs(tt.args)
 
 			err := cmd.Execute()

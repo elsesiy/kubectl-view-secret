@@ -59,6 +59,13 @@ You can find the latest package description for Arch users [here](https://aur.ar
 
 Contribution by [@jocelynthode](https://github.com/jocelynthode)
 
+#### Nix
+You can install the latest version from Nixpkgs ([24.05](https://search.nixos.org/packages?channel=24.05&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret), [unstable](https://search.nixos.org/packages?channel=unstable&show=kubectl-view-secret&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret)) or try it via a temporary nix-shell:
+
+```
+nix-shell -p kubectl-view-secret
+```
+
 ### Build from source
 
     # Clone this repository (or your fork)

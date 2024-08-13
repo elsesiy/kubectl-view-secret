@@ -1,7 +1,6 @@
 ---
 name: ci
-on:
-  pull_request:
+on: [push, pull_request]
 jobs:
   ci_job:
     name: test
@@ -13,3 +12,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Test
         run: make test
+      - name: Generate coverage report
+        run: make test-cov
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

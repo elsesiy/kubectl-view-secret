@@ -2,6 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/elsesiy/kubectl-view-secret)](https://goreportcard.com/report/github.com/elsesiy/kubectl-view-secret)
 ![CI](https://github.com/elsesiy/kubectl-view-secret/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/github/elsesiy/kubectl-view-secret/graph/badge.svg?token=RODJX5GLDB)](https://codecov.io/github/elsesiy/kubectl-view-secret)
 [![Twitter](https://img.shields.io/badge/twitter-@elsesiy-blue.svg)](http://twitter.com/elsesiy)
 [![GitHub release](https://img.shields.io/github/release/elsesiy/kubectl-view-secret.svg)](https://github.com/elsesiy/kubectl-view-secret/releases)
 

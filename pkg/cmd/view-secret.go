@@ -229,12 +229,12 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
 			b64d, _ := base64.StdEncoding.DecodeString(v)
-			_, _ = fmt.Fprint(outWriter, string(b64d))
+			_, _ = fmt.Fprintf(outWriter, "%s\n", strings.TrimSpace(string(b64d)))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
 			b64d, _ := base64.StdEncoding.DecodeString(v)
-			_, _ = fmt.Fprint(outWriter, string(b64d))
+			_, _ = fmt.Fprintf(outWriter, "%s\n", strings.TrimSpace(string(b64d)))
 		} else {
 			return ErrSecretKeyNotFound
 		}

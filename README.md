@@ -6,6 +6,8 @@
 [![Twitter](https://img.shields.io/badge/twitter-@elsesiy-blue.svg)](http://twitter.com/elsesiy)
 [![GitHub release](https://img.shields.io/github/release/elsesiy/kubectl-view-secret.svg)](https://github.com/elsesiy/kubectl-view-secret/releases)
 
+![gif](./media/view-secret.gif)
+
 This plugin allows for easy secret decoding. Useful if you want to see what's inside of a secret without always go through the following:
 
 1. `kubectl get secret <secret> -o yaml`

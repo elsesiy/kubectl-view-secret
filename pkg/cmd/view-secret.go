@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
 	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
 )
@@ -39,19 +41,23 @@ const (
 	%[1]s view-secret <secret> -q/--quiet
 `
 
-	singleKeyDescription = "Choosing key: %[1]s"
-	listDescription      = "Multiple sub keys found. Specify another argument, one of:"
-	listPrefix           = "->"
+	secretDescription     = "Found %d keys in secret %q. Choose one or select 'all' to view."
+	secretListDescription = "Found %d secrets. Choose one."
+	secretListTitle       = "Available Secrets"
+	secretTitle           = "Secret Data"
+	singleKeyDescription  = "Viewing only available key: %[1]s"
 )
 
-// ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
-var ErrSecretKeyNotFound = errors.New("provided key not found in secret")
+var (
+	// ErrNoSecretFound is thrown when no secret name was provided but we didn't find any secrets
+	ErrNoSecretFound = errors.New("no secrets found")
 
-// ErrSecretEmpty is thrown when there's no data in the secret
-var ErrSecretEmpty = errors.New("secret is empty")
+	// ErrSecretEmpty is thrown when there's no data in the secret
+	ErrSecretEmpty = errors.New("secret is empty")
 
-// ErrInsufficientArgs is thrown if arg len <1 or >2
-var ErrInsufficientArgs = fmt.Errorf("\nincorrect number or arguments, see --help for usage instructions")
+	// ErrSecretKeyNotFound is thrown if the key doesn't exist in the secret
+	ErrSecretKeyNotFound = errors.New("provided key not found in secret")
+)
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
@@ -71,14 +77,13 @@ func NewCmdViewSecret() *cobra.Command {
 	res := &CommandOpts{}
 
 	cmd := &cobra.Command{
-		Use:          "view-secret [secret-name] [secret-key]",
-		Short:        "Decode a kubernetes secret by name & key in the current context/cluster/namespace",
+		Args:         cobra.RangeArgs(0, 2),
 		Example:      fmt.Sprintf(example, "kubectl"),
+		Short:        "Decode a kubernetes secret by name & key in the current context/cluster/namespace",
 		SilenceUsage: true,
+		Use:          "view-secret [secret-name] [secret-key]",
 		RunE: func(c *cobra.Command, args []string) error {
-			if err := res.Validate(args); err != nil {
-				return err
-			}
+			res.ParseArgs(args)
 			if err := res.Retrieve(c); err != nil {
 				return err
 			}
@@ -100,19 +105,16 @@ func NewCmdViewSecret() *cobra.Command {
 	return cmd
 }
 
-// Validate ensures proper command usage
-func (c *CommandOpts) Validate(args []string) error {
+// ParseArgs serializes the user supplied program arguments
+func (c *CommandOpts) ParseArgs(args []string) {
 	argLen := len(args)
-	if argLen < 1 || argLen > 2 {
-		return ErrInsufficientArgs
-	}
+	if argLen >= 1 {
+		c.secretName = args[0]
 
-	c.secretName = args[0]
-	if argLen == 2 {
-		c.secretKey = args[1]
+		if argLen == 2 {
+			c.secretKey = args[1]
+		}
 	}
-
-	return nil
 }
 
 // Retrieve reads the kubeconfig and decodes the secret
@@ -124,7 +126,12 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	impersonateGroupOverride, _ := cmd.Flags().GetString("as-group")
 
 	var res, cmdErr bytes.Buffer
-	commandArgs := []string{"get", "secret", c.secretName, "-o", "json"}
+
+	commandArgs := []string{"get", "secret", "-o", "json"}
+	if c.secretName != "" {
+		commandArgs = []string{"get", "secret", c.secretName, "-o", "json"}
+	}
+
 	if nsOverride != "" {
 		commandArgs = append(commandArgs, "-n", nsOverride)
 	}
@@ -154,54 +161,108 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 		return nil
 	}
 
-	var secret map[string]interface{}
-	if err := json.Unmarshal(res.Bytes(), &secret); err != nil {
-		return err
+	var secret Secret
+	if c.secretName == "" {
+		var secretList SecretList
+		if err := json.Unmarshal(res.Bytes(), &secretList); err != nil {
+			return err
+		}
+
+		// Since we don't query valid namespaces, we'll avoid prompting the user to select a secret if we didn't retrieve any secrets
+		if len(secretList.Items) == 0 {
+			return ErrNoSecretFound
+		}
+
+		opts := []string{}
+		secretMap := map[string]Secret{}
+		for _, v := range secretList.Items {
+			opts = append(opts, v.Metadata.Name)
+			secretMap[v.Metadata.Name] = v
+		}
+
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title(secretListTitle).
+					Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
+					Options(huh.NewOptions(opts...)...).
+					Value(&c.secretName),
+			),
+		).WithProgramOptions(tea.WithInput(cmd.InOrStdin()), tea.WithOutput(cmd.OutOrStdout())).Run()
+		if err != nil {
+			return err
+		}
+
+		secret = secretMap[c.secretName]
+	} else {
+		if err := json.Unmarshal(res.Bytes(), &secret); err != nil {
+			return err
+		}
 	}
 
 	if c.quiet {
-		return ProcessSecret(os.Stdout, io.Discard, secret, c.secretKey, c.decodeAll)
+		return ProcessSecret(cmd.OutOrStdout(), io.Discard, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll)
 	}
 
-	return ProcessSecret(os.Stdout, os.Stderr, secret, c.secretKey, c.decodeAll)
+	return ProcessSecret(cmd.OutOrStdout(), cmd.OutOrStderr(), cmd.InOrStdin(), secret, c.secretKey, c.decodeAll)
 }
 
 // ProcessSecret takes the secret and user input to determine the output
-func ProcessSecret(outWriter, errWriter io.Writer, secret map[string]interface{}, secretKey string, decodeAll bool) error {
-	data, ok := secret["data"].(map[string]interface{})
-	if !ok {
+func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret Secret, secretKey string, decodeAll bool) error {
+	data := secret.Data
+	if len(data) == 0 {
 		return ErrSecretEmpty
 	}
 
 	var keys []string
-	for k := range data {
+	for k := range secret.Data {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	if decodeAll {
 		for _, k := range keys {
-			b64d, _ := base64.StdEncoding.DecodeString(data[k].(string))
+			b64d, _ := base64.StdEncoding.DecodeString(data[k])
 			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, strings.TrimSpace(string(b64d)))
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
-			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
-			_, _ = fmt.Fprint(outWriter, string(b64d))
+			b64d, _ := base64.StdEncoding.DecodeString(v)
+			_, _ = fmt.Fprintf(outWriter, "%s\n", strings.TrimSpace(string(b64d)))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
-			b64d, _ := base64.StdEncoding.DecodeString(v.(string))
-			_, _ = fmt.Fprint(outWriter, string(b64d))
+			b64d, _ := base64.StdEncoding.DecodeString(v)
+			_, _ = fmt.Fprintf(outWriter, "%s\n", strings.TrimSpace(string(b64d)))
 		} else {
 			return ErrSecretKeyNotFound
 		}
 	} else {
-		_, _ = fmt.Fprintln(errWriter, listDescription)
+		opts := []string{"all"}
 		for k := range data {
-			_, _ = fmt.Fprintf(outWriter, "%s %s\n", listPrefix, k)
+			opts = append(opts, k)
 		}
+
+		var selection string
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title(secretTitle).
+					Description(fmt.Sprintf(secretDescription, len(data), secret.Metadata.Name)).
+					Options(huh.NewOptions(opts...)...).
+					Value(&selection),
+			),
+		).WithProgramOptions(tea.WithInput(inputReader), tea.WithOutput(outWriter)).Run()
+		if err != nil {
+			return err
+		}
+
+		if selection == "all" {
+			decodeAll = true
+		}
+
+		return ProcessSecret(outWriter, errWriter, inputReader, secret, selection, decodeAll)
 	}
 
 	return nil

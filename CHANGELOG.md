@@ -1,8 +1,18 @@
 # Changelog
 
-## [0.12.1](https://github.com/elsesiy/kubectl-view-secret/tree/0.12.1) (2024-08-02)
+## [0.13.0](https://github.com/elsesiy/kubectl-view-secret/tree/0.13.0) (2024-08-14)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.12.0...0.12.1)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.12.1...0.13.0)
+
+**Merged pull requests:**
+
+- Add instructions for nixpkgs to README [\#49](https://github.com/elsesiy/kubectl-view-secret/pull/49) ([elsesiy](https://github.com/elsesiy))
+- Add test coverage via codecov.io [\#48](https://github.com/elsesiy/kubectl-view-secret/pull/48) ([elsesiy](https://github.com/elsesiy))
+- Integrate with huh for better interface [\#47](https://github.com/elsesiy/kubectl-view-secret/pull/47) ([elsesiy](https://github.com/elsesiy))
+
+## [v0.12.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.12.1) (2024-08-02)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.12.0...v0.12.1)
 
 **Closed issues:**
 

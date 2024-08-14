@@ -18,13 +18,13 @@ Instead you can now do:
 
     # print secret keys
     kubectl view-secret <secret>
-    
+
     # decode specific entry
     kubectl view-secret <secret> <key>
-    
+
     # decode all contents
     kubectl view-secret <secret> -a/--all
-    
+
     # print keys for secret in different namespace
     kubectl view-secret <secret> -n/--namespace <ns>
 
@@ -39,6 +39,19 @@ Instead you can now do:
 
 ## Usage
 
+### Shell completion
+
+To enable completion for this plugin, you will need to use kubectl 1.26 or
+above. Then, create a script named `kubectl_complete-view_secret` with the
+following content:
+
+```bash
+#!/bin/bash
+kubectl view-secret __complete "$@"
+```
+
+and put it somewhere in your PATH.
+
 ### Krew
 
 This plugin is available through [krew](https://krew.dev) via:
@@ -50,6 +63,7 @@ kubectl krew install view-secret
 ### Binary releases
 
 #### GitHub
+
 You can find the latest binaries in the [releases](https://github.com/elsesiy/kubectl-view-secret/releases) section.  
 To install it, place it somewhere in your `$PATH` for `kubectl` to pick it up.
 
@@ -57,6 +71,7 @@ To install it, place it somewhere in your `$PATH` for `kubectl` to pick it up.
 due to the enforced naming convention for plugins by `kubectl`. More on this [here](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/#naming-a-plugin).
 
 #### AUR package
+
 You can find the latest package description for Arch users [here](https://aur.archlinux.org/packages/kubectl-view-secret-bin).
 
 Contribution by [@jocelynthode](https://github.com/jocelynthode)

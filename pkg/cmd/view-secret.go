@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"sort"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -223,18 +222,18 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 	if decodeAll {
 		for _, k := range keys {
 			b64d, _ := base64.StdEncoding.DecodeString(data[k])
-			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, strings.TrimSpace(string(b64d)))
+			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, string(b64d))
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
 			b64d, _ := base64.StdEncoding.DecodeString(v)
-			_, _ = fmt.Fprintf(outWriter, "%s\n", strings.TrimSpace(string(b64d)))
+			_, _ = fmt.Fprintf(outWriter, "%s\n", string(b64d))
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
 			b64d, _ := base64.StdEncoding.DecodeString(v)
-			_, _ = fmt.Fprintf(outWriter, "%s\n", strings.TrimSpace(string(b64d)))
+			_, _ = fmt.Fprintf(outWriter, "%s\n", string(b64d))
 		} else {
 			return ErrSecretKeyNotFound
 		}

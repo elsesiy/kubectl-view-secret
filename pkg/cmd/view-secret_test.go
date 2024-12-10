@@ -122,8 +122,8 @@ func TestProcessSecret(t *testing.T) {
 			secret,
 			[]string{
 				"TEST_CONN_STR='mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin'",
-				"TEST_PASSWORD='secret'",
-				"TEST_PASSWORD_2='verysecret'",
+				"TEST_PASSWORD='secret\n'",
+				"TEST_PASSWORD_2='verysecret\n'",
 			},
 			[]string{},
 			"",
@@ -145,8 +145,8 @@ func TestProcessSecret(t *testing.T) {
 			secret,
 			[]string{
 				"TEST_CONN_STR='mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin'",
-				"TEST_PASSWORD='secret'",
-				"TEST_PASSWORD_2='verysecret'",
+				"TEST_PASSWORD='secret\n'",
+				"TEST_PASSWORD_2='verysecret\n'",
 			},
 			nil,
 			"",

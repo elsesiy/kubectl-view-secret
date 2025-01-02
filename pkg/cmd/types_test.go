@@ -27,7 +27,20 @@ var (
     "type": "Opaque"
 }`
 
-	emptySecretJson = `{
+	helmSecretJson = `{
+	  "apiVersion": "v1",
+	   "data": {
+         "release": "blob"
+		 },
+	   "kind": "Secret",
+	   "metadata": {
+	       "name": "sh.helm.release.v1.wordpress.v1",
+	       "namespace": "default"
+	   },
+	   "type": "helm.sh/release.v1"
+	}`
+
+	invalidSecretJson = `{
     "apiVersion": "v1",
     "data": {},
     "kind": "Secret",
@@ -45,17 +58,18 @@ func TestSerialize(t *testing.T) {
 		want    Secret
 		wantErr error
 	}{
-		"empty secret": {
-			input: emptySecretJson,
+		"empty opqague secret": {
+			input: invalidSecretJson,
 			want: Secret{
 				Metadata: Metadata{
 					Name:      "test",
 					Namespace: "default",
 				},
+				Type: Opaque,
 			},
 			wantErr: errors.New("invalid character '}' looking for beginning of object key string"),
 		},
-		"valid secret": {
+		"valid opague secret": {
 			input: validSecretJson,
 			want: Secret{
 				Data: SecretData{
@@ -66,6 +80,20 @@ func TestSerialize(t *testing.T) {
 					Name:      "test",
 					Namespace: "default",
 				},
+				Type: Opaque,
+			},
+		},
+		"valid helm secret": {
+			input: helmSecretJson,
+			want: Secret{
+				Data: SecretData{
+					"release": "blob",
+				},
+				Metadata: Metadata{
+					Name:      "sh.helm.release.v1.wordpress.v1",
+					Namespace: "default",
+				},
+				Type: Helm,
 			},
 		},
 	}

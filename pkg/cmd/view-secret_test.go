@@ -170,7 +170,7 @@ func TestProcessSecret(t *testing.T) {
 				readBuf = *strings.NewReader(test.feedkeys)
 			}
 
-			err := ProcessSecret(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData}, test.secretKey, test.decodeAll)
+			err := ProcessSecret(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData, Type: Opaque}, test.secretKey, test.decodeAll)
 
 			if test.err != nil {
 				assert.Equal(t, err, test.err)

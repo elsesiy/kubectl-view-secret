@@ -11,45 +11,48 @@ import (
 
 var (
 	validSecretJson = `{
-    "apiVersion": "v1",
-    "data": {
-        "key1": "dmFsdWUxCg==",
-        "key2": "dmFsdWUyCg=="
-    },
-    "kind": "Secret",
-    "metadata": {
-        "creationTimestamp": "2024-08-02T21:25:40Z",
-        "name": "test",
-        "namespace": "default",
-        "resourceVersion": "715",
-        "uid": "0027fdc9-5371-4715-a0a8-61f3f78fdd36"
-    },
-    "type": "Opaque"
-}`
+  "apiVersion": "v1",
+  "data": {
+    "key1": "dmFsdWUxCg==",
+    "key2": "dmFsdWUyCg=="
+  },
+  "kind": "Secret",
+  "metadata": {
+    "creationTimestamp": "2024-08-02T21:25:40Z",
+    "name": "test",
+    "namespace": "default",
+    "resourceVersion": "715",
+    "uid": "0027fdc9-5371-4715-a0a8-61f3f78fdd36"
+  },
+  "type": "Opaque"
+}
+`
 
 	helmSecretJson = `{
-	  "apiVersion": "v1",
-	   "data": {
-         "release": "blob"
-		 },
-	   "kind": "Secret",
-	   "metadata": {
-	       "name": "sh.helm.release.v1.wordpress.v1",
-	       "namespace": "default"
-	   },
-	   "type": "helm.sh/release.v1"
-	}`
+  "apiVersion": "v1",
+  "data": {
+    "release": "blob"
+  },
+  "kind": "Secret",
+  "metadata": {
+    "name": "sh.helm.release.v1.wordpress.v1",
+    "namespace": "default"
+  },
+  "type": "helm.sh/release.v1"
+}
+`
 
 	invalidSecretJson = `{
-    "apiVersion": "v1",
-    "data": {},
-    "kind": "Secret",
-    "metadata": {
-        "name": "test-empty",
-        "namespace": "default",
-    },
-    "type": "Opaque"
-}`
+  "apiVersion": "v1",
+  "data": {},
+  "kind": "Secret",
+  "metadata": {
+    "name": "test-empty",
+    "namespace": "default",
+  },
+  "type": "Opaque"
+}
+`
 )
 
 func TestSerialize(t *testing.T) {

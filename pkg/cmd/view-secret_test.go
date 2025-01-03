@@ -22,6 +22,11 @@ var (
 		"SINGLE_PASSWORD": "c2VjcmV0Cg==",
 	}
 
+	// echo "helm-test" | gzip -c | base64 | base64
+	secretHelm = SecretData{
+		"release": "SDRzSUFGb2FlR2NBQTh0SXpjblZMVWt0THVFQ0FQdWt3aHdLQUFBQQo=",
+	}
+
 	secretEmpty = SecretData{}
 )
 
@@ -112,6 +117,7 @@ func TestNewCmdViewSecret(t *testing.T) {
 func TestProcessSecret(t *testing.T) {
 	tests := map[string]struct {
 		secretData SecretData
+		secretType SecretType
 		wantStdOut []string
 		wantStdErr []string
 		secretKey  string
@@ -121,6 +127,7 @@ func TestProcessSecret(t *testing.T) {
 	}{
 		"view-secret <secret>": {
 			secret,
+			Opaque,
 			[]string{
 				"TEST_CONN_STR='mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin'",
 				"TEST_PASSWORD='secret\n'",
@@ -134,6 +141,7 @@ func TestProcessSecret(t *testing.T) {
 		},
 		"view-secret <secret-single-key>": {
 			secretSingle,
+			Opaque,
 			[]string{"secret"},
 			[]string{fmt.Sprintf(singleKeyDescription, "SINGLE_PASSWORD")},
 			"",
@@ -141,9 +149,29 @@ func TestProcessSecret(t *testing.T) {
 			nil,
 			"",
 		},
-		"view-secret test TEST_PASSWORD": {secret, []string{"secret"}, nil, "TEST_PASSWORD", false, nil, ""},
+		"view-secret <helm-secret>": {
+			secretHelm,
+			Helm,
+			[]string{"helm-test"},
+			[]string{fmt.Sprintf(singleKeyDescription, "release")},
+			"",
+			false,
+			nil,
+			"",
+		},
+		"view-secret test TEST_PASSWORD": {
+			secret,
+			Opaque,
+			[]string{"secret"},
+			nil,
+			"TEST_PASSWORD",
+			false,
+			nil,
+			"",
+		},
 		"view-secret test -a": {
 			secret,
+			Opaque,
 			[]string{
 				"TEST_CONN_STR='mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin'",
 				"TEST_PASSWORD='secret\n'",
@@ -155,8 +183,26 @@ func TestProcessSecret(t *testing.T) {
 			nil,
 			"",
 		},
-		"view-secret test NONE":      {secret, nil, nil, "NONE", false, ErrSecretKeyNotFound, ""},
-		"view-secret <secret-empty>": {secretEmpty, nil, nil, "", false, ErrSecretEmpty, ""},
+		"view-secret test NONE": {
+			secret,
+			Opaque,
+			nil,
+			nil,
+			"NONE",
+			false,
+			ErrSecretKeyNotFound,
+			"",
+		},
+		"view-secret <secret-empty>": {
+			secretEmpty,
+			Opaque,
+			nil,
+			nil,
+			"",
+			false,
+			ErrSecretEmpty,
+			"",
+		},
 	}
 
 	for name, test := range tests {
@@ -171,7 +217,7 @@ func TestProcessSecret(t *testing.T) {
 				readBuf = *strings.NewReader(test.feedkeys)
 			}
 
-			err := ProcessSecret(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData, Type: Opaque}, test.secretKey, test.decodeAll)
+			err := ProcessSecret(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData, Type: test.secretType}, test.secretKey, test.decodeAll)
 
 			if test.err != nil {
 				assert.Equal(t, err, test.err)

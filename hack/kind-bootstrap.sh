@@ -68,3 +68,25 @@ kind: Namespace
 metadata:
   name: empty
 EOF
+
+## 'helm' namespace
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: helm
+EOF
+
+## helm secret 'test3' in namespace 'helm' (single key)
+sec=$(echo "helm-test" | gzip -c | base64 | base64)
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  release: $sec
+kind: Secret
+metadata:
+  name: test3
+  namespace: helm
+type: helm.sh/release.v1
+EOF
+

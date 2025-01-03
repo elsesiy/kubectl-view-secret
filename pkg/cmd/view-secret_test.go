@@ -62,6 +62,7 @@ func TestNewCmdViewSecret(t *testing.T) {
 		"custom ns (does not exist)": {args: []string{"test", "--namespace", "bob"}, want: `Error from server (NotFound): namespaces "bob" not found`},
 		"custom ns (no secret)":      {args: []string{"test", "--namespace", "another"}, want: `Error from server (NotFound): secrets "test" not found`},
 		"custom ns (valid secret)":   {args: []string{"gopher", "--namespace", "another"}, want: `Viewing only available key: foo\nbar`},
+		"helm":                       {args: []string{"test3", "--namespace", "helm"}, want: `Viewing only available key: release\nhelm-test`},
 		"impersonate group":          {args: []string{"test", "--as", "gopher"}},
 		"impersonate user & group":   {args: []string{"test", "--as", "gopher", "--as-group", "golovers"}},
 		// make bootstrap sources 2 test secrets in the default namespace, select the first one and print all values

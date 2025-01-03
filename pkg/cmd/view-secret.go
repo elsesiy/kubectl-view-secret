@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -221,19 +220,19 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 
 	if decodeAll {
 		for _, k := range keys {
-			b64d, _ := base64.StdEncoding.DecodeString(data[k])
-			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, string(b64d))
+			s, _ := secret.Decode(data[k])
+			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, s)
 		}
 	} else if len(data) == 1 {
 		for k, v := range data {
 			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
-			b64d, _ := base64.StdEncoding.DecodeString(v)
-			_, _ = fmt.Fprintf(outWriter, "%s\n", string(b64d))
+			s, _ := secret.Decode(v)
+			_, _ = fmt.Fprintf(outWriter, "%s\n", s)
 		}
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
-			b64d, _ := base64.StdEncoding.DecodeString(v)
-			_, _ = fmt.Fprintf(outWriter, "%s\n", string(b64d))
+			s, _ := secret.Decode(v)
+			_, _ = fmt.Fprintf(outWriter, "%s\n", s)
 		} else {
 			return ErrSecretKeyNotFound
 		}

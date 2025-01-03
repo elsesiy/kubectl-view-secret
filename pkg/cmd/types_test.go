@@ -11,32 +11,48 @@ import (
 
 var (
 	validSecretJson = `{
-    "apiVersion": "v1",
-    "data": {
-        "key1": "dmFsdWUxCg==",
-        "key2": "dmFsdWUyCg=="
-    },
-    "kind": "Secret",
-    "metadata": {
-        "creationTimestamp": "2024-08-02T21:25:40Z",
-        "name": "test",
-        "namespace": "default",
-        "resourceVersion": "715",
-        "uid": "0027fdc9-5371-4715-a0a8-61f3f78fdd36"
-    },
-    "type": "Opaque"
-}`
+  "apiVersion": "v1",
+  "data": {
+    "key1": "dmFsdWUxCg==",
+    "key2": "dmFsdWUyCg=="
+  },
+  "kind": "Secret",
+  "metadata": {
+    "creationTimestamp": "2024-08-02T21:25:40Z",
+    "name": "test",
+    "namespace": "default",
+    "resourceVersion": "715",
+    "uid": "0027fdc9-5371-4715-a0a8-61f3f78fdd36"
+  },
+  "type": "Opaque"
+}
+`
 
-	emptySecretJson = `{
-    "apiVersion": "v1",
-    "data": {},
-    "kind": "Secret",
-    "metadata": {
-        "name": "test-empty",
-        "namespace": "default",
-    },
-    "type": "Opaque"
-}`
+	helmSecretJson = `{
+  "apiVersion": "v1",
+  "data": {
+    "release": "blob"
+  },
+  "kind": "Secret",
+  "metadata": {
+    "name": "sh.helm.release.v1.wordpress.v1",
+    "namespace": "default"
+  },
+  "type": "helm.sh/release.v1"
+}
+`
+
+	invalidSecretJson = `{
+  "apiVersion": "v1",
+  "data": {},
+  "kind": "Secret",
+  "metadata": {
+    "name": "test-empty",
+    "namespace": "default",
+  },
+  "type": "Opaque"
+}
+`
 )
 
 func TestSerialize(t *testing.T) {
@@ -45,17 +61,18 @@ func TestSerialize(t *testing.T) {
 		want    Secret
 		wantErr error
 	}{
-		"empty secret": {
-			input: emptySecretJson,
+		"empty opaque secret": {
+			input: invalidSecretJson,
 			want: Secret{
 				Metadata: Metadata{
 					Name:      "test",
 					Namespace: "default",
 				},
+				Type: Opaque,
 			},
 			wantErr: errors.New("invalid character '}' looking for beginning of object key string"),
 		},
-		"valid secret": {
+		"valid opaque secret": {
 			input: validSecretJson,
 			want: Secret{
 				Data: SecretData{
@@ -66,6 +83,20 @@ func TestSerialize(t *testing.T) {
 					Name:      "test",
 					Namespace: "default",
 				},
+				Type: Opaque,
+			},
+		},
+		"valid helm secret": {
+			input: helmSecretJson,
+			want: Secret{
+				Data: SecretData{
+					"release": "blob",
+				},
+				Metadata: Metadata{
+					Name:      "sh.helm.release.v1.wordpress.v1",
+					Namespace: "default",
+				},
+				Type: Helm,
 			},
 		},
 	}

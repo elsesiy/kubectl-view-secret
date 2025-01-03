@@ -1,17 +1,21 @@
 package cmd
 
+// SecretList represents a list of secrets
 type SecretList struct {
 	Items []Secret `json:"items"`
 }
 
+// Secret represents a kubernetes secret
 type Secret struct {
 	Data     SecretData `json:"data"`
 	Metadata Metadata   `json:"metadata"`
 	Type     SecretType `json:"type"`
 }
 
+// SecretData represents the data of a secret
 type SecretData map[string]string
 
+// Metadata represents the metadata of a secret
 type Metadata struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`

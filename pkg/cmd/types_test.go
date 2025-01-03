@@ -58,7 +58,7 @@ func TestSerialize(t *testing.T) {
 		want    Secret
 		wantErr error
 	}{
-		"empty opqague secret": {
+		"empty opaque secret": {
 			input: invalidSecretJson,
 			want: Secret{
 				Metadata: Metadata{
@@ -69,7 +69,7 @@ func TestSerialize(t *testing.T) {
 			},
 			wantErr: errors.New("invalid character '}' looking for beginning of object key string"),
 		},
-		"valid opague secret": {
+		"valid opaque secret": {
 			input: validSecretJson,
 			want: Secret{
 				Data: SecretData{

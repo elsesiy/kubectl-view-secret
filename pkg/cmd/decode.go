@@ -8,10 +8,12 @@ import (
 	"strings"
 )
 
+// SecretDecoder is an interface for decoding various kubernetes secret resources
 type SecretDecoder interface {
 	Decode(input string) (string, error)
 }
 
+// Decode decodes a secret based on its type, currently supporting only Opaque and Helm secrets
 func (s Secret) Decode(input string) (string, error) {
 	switch s.Type {
 	// TODO handle all secret types

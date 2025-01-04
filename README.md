@@ -57,9 +57,11 @@ To install it, place it somewhere in your `$PATH` for `kubectl` to pick it up.
 due to the enforced naming convention for plugins by `kubectl`. More on this [here](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/#naming-a-plugin).
 
 #### AUR package
-You can find the latest package description for Arch users [here](https://aur.archlinux.org/packages/kubectl-view-secret-bin).
-
-Contribution by [@jocelynthode](https://github.com/jocelynthode)
+Thanks to external contributions the plugin is available in the Arch user repository.
+| Package | Contributor |
+| -- | -- |
+| [bin](https://aur.archlinux.org/packages/kubectl-view-secret-bin) | [@jocelynthode](https://github.com/jocelynthode) |
+| [git](https://aur.archlinux.org/packages/kubectl-view-secret-git) | [@aryklein](https://github.com/aryklein) |
 
 #### Nix
 You can install the latest version from Nixpkgs ([24.05](https://search.nixos.org/packages?channel=24.05&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret), [unstable](https://search.nixos.org/packages?channel=unstable&show=kubectl-view-secret&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret)) or try it via a temporary nix-shell:

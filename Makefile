@@ -18,5 +18,8 @@ clean:
 	@rm -rf $(BINARY)
 	@kind delete cluster --name kvs-test
 
+mod-update:
+	@go get -u -t ./... && go mod tidy
+
 $(BINARY): $(SOURCES)
 	CGO_ENABLED=0 go build -o $(BINARY) -ldflags="-s -w" ./cmd/$(BINARY).go

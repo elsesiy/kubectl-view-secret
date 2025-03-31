@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,14 +68,18 @@ func TestDecode(t *testing.T) {
 			"test\n",
 			nil,
 		},
-		"unknown secret": {
+		// basic auth via default case
+		"basic auth": {
 			func() Secret {
 				return Secret{
-					Type: "invalid",
+					Data: map[string]string{
+						"key": "dGVzdAo=",
+					},
+					Type: BasicAuth,
 				}
 			},
-			"",
-			errors.New("couldn't decode unknown secret type \"invalid\""),
+			"test\n",
+			nil,
 		},
 	}
 

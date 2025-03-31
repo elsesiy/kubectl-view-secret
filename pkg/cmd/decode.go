@@ -45,7 +45,12 @@ func (s Secret) Decode(input string) (string, error) {
 		}
 
 		return string(s), nil
+	default:
+		// Attempt to decode without specific type handling
+		b64d, err := base64.StdEncoding.DecodeString(input)
+		if err != nil {
+			return "", fmt.Errorf("couldn't decode unknown secret type %q: %w", s.Type, err)
+		}
+		return string(b64d), nil
 	}
-
-	return "", fmt.Errorf("couldn't decode unknown secret type %q", s.Type)
 }

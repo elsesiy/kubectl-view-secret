@@ -1,8 +1,28 @@
 # Changelog
 
-## [0.13.0](https://github.com/elsesiy/kubectl-view-secret/tree/0.13.0) (2024-08-14)
+## [0.14.0](https://github.com/elsesiy/kubectl-view-secret/tree/0.14.0) (2025-03-31)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.12.1...0.13.0)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.13.0...0.14.0)
+
+**Closed issues:**
+
+- Update to go1.24 [\#58](https://github.com/elsesiy/kubectl-view-secret/issues/58)
+- kubectl-view-secret returns null for kubernetes.io/basic-auth secrets [\#55](https://github.com/elsesiy/kubectl-view-secret/issues/55)
+- I just added the -git version in the AUR [\#51](https://github.com/elsesiy/kubectl-view-secret/issues/51)
+- Add support for helm secrets [\#50](https://github.com/elsesiy/kubectl-view-secret/issues/50)
+- New line getting trimmed when using `view-secret -a` [\#44](https://github.com/elsesiy/kubectl-view-secret/issues/44)
+
+**Merged pull requests:**
+
+- Bump go toolchain to 1.24 & update dependencies [\#59](https://github.com/elsesiy/kubectl-view-secret/pull/59) ([elsesiy](https://github.com/elsesiy))
+- Add decode default case for unhandled types [\#57](https://github.com/elsesiy/kubectl-view-secret/pull/57) ([elsesiy](https://github.com/elsesiy))
+- Add support for helm secrets [\#54](https://github.com/elsesiy/kubectl-view-secret/pull/54) ([elsesiy](https://github.com/elsesiy))
+- chore: go1.23, bump module dependencies [\#53](https://github.com/elsesiy/kubectl-view-secret/pull/53) ([elsesiy](https://github.com/elsesiy))
+- Don't trim Secrets [\#52](https://github.com/elsesiy/kubectl-view-secret/pull/52) ([rybnico](https://github.com/rybnico))
+
+## [v0.13.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.13.0) (2024-08-14)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.12.1...v0.13.0)
 
 **Merged pull requests:**
 

@@ -213,7 +213,7 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 	}
 
 	var keys []string
-	for k := range secret.Data {
+	for k := range data {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -237,10 +237,9 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 			return ErrSecretKeyNotFound
 		}
 	} else {
-		opts := []string{"all"}
-		for k := range data {
-			opts = append(opts, k)
-		}
+		opts := make([]string, len(keys)+1)
+		opts[0] = "all"
+		copy(opts[1:], keys)
 
 		var selection string
 		err := huh.NewForm(

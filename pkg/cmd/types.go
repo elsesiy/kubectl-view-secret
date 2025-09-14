@@ -41,11 +41,11 @@ type SecretType string
 const (
 	BasicAuth           SecretType = "kubernetes.io/basic-auth"
 	DockerCfg           SecretType = "kubernetes.io/dockercfg"
-	DockerConfigJson    SecretType = "kubernetes.io/dockerconfigjson"
+	DockerConfigJSON    SecretType = "kubernetes.io/dockerconfigjson"
 	Helm                SecretType = "helm.sh/release.v1"
 	Opaque              SecretType = "Opaque"
 	ServiceAccountToken SecretType = "kubernetes.io/service-account-token"
-	SshAuth             SecretType = "kubernetes.io/ssh-auth"
-	Tls                 SecretType = "kubernetes.io/tls"
+	SSHAuth             SecretType = "kubernetes.io/ssh-auth"
+	TLS                 SecretType = "kubernetes.io/tls"
 	Token               SecretType = "bootstrap.kubernetes.io/token"
 )

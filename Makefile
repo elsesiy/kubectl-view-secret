@@ -10,6 +10,9 @@ bootstrap:
 test: $(SOURCES)
 	go test -v -short -race -timeout 30s ./...
 
+lint:
+	golangci-lint run --timeout 10m
+
 test-cov:
 	go test ./... -coverprofile=$(COV_REPORT)
 	go tool cover -html=$(COV_REPORT)

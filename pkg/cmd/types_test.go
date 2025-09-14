@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	validSecretJson = `{
+	validSecretJSON = `{
   "apiVersion": "v1",
   "data": {
     "key1": "dmFsdWUxCg==",
@@ -28,7 +28,7 @@ var (
 }
 `
 
-	helmSecretJson = `{
+	helmSecretJSON = `{
   "apiVersion": "v1",
   "data": {
     "release": "blob"
@@ -42,7 +42,7 @@ var (
 }
 `
 
-	invalidSecretJson = `{
+	invalidSecretJSON = `{
   "apiVersion": "v1",
   "data": {},
   "kind": "Secret",
@@ -62,7 +62,7 @@ func TestSerialize(t *testing.T) {
 		wantErr error
 	}{
 		"empty opaque secret": {
-			input: invalidSecretJson,
+			input: invalidSecretJSON,
 			want: Secret{
 				Metadata: Metadata{
 					Name:      "test",
@@ -73,7 +73,7 @@ func TestSerialize(t *testing.T) {
 			wantErr: errors.New("invalid character '}' looking for beginning of object key string"),
 		},
 		"valid opaque secret": {
-			input: validSecretJson,
+			input: validSecretJSON,
 			want: Secret{
 				Data: SecretData{
 					"key1": "dmFsdWUxCg==",
@@ -87,7 +87,7 @@ func TestSerialize(t *testing.T) {
 			},
 		},
 		"valid helm secret": {
-			input: helmSecretJson,
+			input: helmSecretJSON,
 			want: Secret{
 				Data: SecretData{
 					"release": "blob",

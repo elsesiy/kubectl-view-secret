@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"sort"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -37,6 +37,9 @@ const (
 
 	# suppress info output
 	%[1]s view-secret <secret> -q/--quiet
+
+	# output in json (or yaml) instead of text
+	%[1]s view-secret <secret> -o/--output json
 `
 
 	secretDescription     = "Found %d keys in secret %q. Choose one or select 'all' to view."
@@ -65,12 +68,16 @@ type CommandOpts struct {
 	impersonateAs       string
 	impersonateAsGroups string
 	kubeConfig          string
+	outputFormat        string
 	quiet               bool
 	secretKey           string
 	secretName          string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
+//
+// This command provides an interactive way to view Kubernetes secrets
+// in plaintext. It supports various output formats and secret types.
 func NewCmdViewSecret() *cobra.Command {
 	res := &CommandOpts{}
 
@@ -99,6 +106,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
 	cmd.Flags().StringVar(&res.impersonateAs, "as", res.impersonateAs, "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
 	cmd.Flags().StringVar(&res.impersonateAsGroups, "as-group", res.impersonateAsGroups, "Groups to impersonate for the operation. Multipe groups can be specified by comma separated.")
+	cmd.Flags().StringVarP(&res.outputFormat, "output", "o", "text", "output format: text, json, yaml")
 
 	return cmd
 }
@@ -116,14 +124,36 @@ func (c *CommandOpts) ParseArgs(args []string) {
 }
 
 // Retrieve reads the kubeconfig and decodes the secret
+//
+// It executes kubectl to fetch secret data, handles user interaction
+// for secret selection, and outputs the decoded content in the
+// specified format.
 func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
+	commandArgs := c.buildKubectlCommand(cmd)
+	output, err := c.executeKubectlCommand(commandArgs)
+	if err != nil {
+		return err
+	}
+
+	secret, err := c.parseSecretResponse(output, cmd)
+	if err != nil {
+		return err
+	}
+
+	if c.quiet {
+		return ProcessSecretWithOptions(cmd.OutOrStdout(), io.Discard, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll, c.outputFormat)
+	}
+
+	return ProcessSecretWithOptions(cmd.OutOrStdout(), cmd.OutOrStderr(), cmd.InOrStdin(), secret, c.secretKey, c.decodeAll, c.outputFormat)
+}
+
+// buildKubectlCommand builds the kubectl command arguments
+func (c *CommandOpts) buildKubectlCommand(cmd *cobra.Command) []string {
 	nsOverride, _ := cmd.Flags().GetString("namespace")
 	ctxOverride, _ := cmd.Flags().GetString("context")
 	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
 	impersonateOverride, _ := cmd.Flags().GetString("as")
 	impersonateGroupOverride, _ := cmd.Flags().GetString("as-group")
-
-	var res, cmdErr bytes.Buffer
 
 	commandArgs := []string{"get", "secret", "-o", "json"}
 	if c.secretName != "" {
@@ -150,63 +180,96 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 		commandArgs = append(commandArgs, "--as-group", impersonateGroupOverride)
 	}
 
+	return commandArgs
+}
+
+// executeKubectlCommand executes the kubectl command and returns the output
+func (c *CommandOpts) executeKubectlCommand(commandArgs []string) ([]byte, error) {
+	var res, cmdErr bytes.Buffer
+
 	out := exec.Command("kubectl", commandArgs...)
 	out.Stdout = &res
 	out.Stderr = &cmdErr
 	err := out.Run()
 	if err != nil {
-		_, _ = fmt.Fprint(os.Stderr, cmdErr.String())
-		return nil
+		if cmdErr.Len() > 0 {
+			return nil, fmt.Errorf("%sError: kubectl command failed: %w", cmdErr.String(), err)
+		}
+		return nil, fmt.Errorf("kubectl command failed: %w", err)
 	}
 
+	return res.Bytes(), nil
+}
+
+// parseSecretResponse parses the kubectl output and handles secret selection
+func (c *CommandOpts) parseSecretResponse(output []byte, cmd *cobra.Command) (Secret, error) {
 	var secret Secret
 	if c.secretName == "" {
-		var secretList SecretList
-		if err := json.Unmarshal(res.Bytes(), &secretList); err != nil {
-			return err
-		}
-
-		// Since we don't query valid namespaces, we'll avoid prompting the user to select a secret if we didn't retrieve any secrets
-		if len(secretList.Items) == 0 {
-			return ErrNoSecretFound
-		}
-
-		opts := []string{}
-		secretMap := map[string]Secret{}
-		for _, v := range secretList.Items {
-			opts = append(opts, v.Metadata.Name)
-			secretMap[v.Metadata.Name] = v
-		}
-
-		err := huh.NewForm(
-			huh.NewGroup(
-				huh.NewSelect[string]().
-					Title(secretListTitle).
-					Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
-					Options(huh.NewOptions(opts...)...).
-					Value(&c.secretName),
-			),
-		).WithProgramOptions(tea.WithInput(cmd.InOrStdin()), tea.WithOutput(cmd.OutOrStdout())).Run()
-		if err != nil {
-			return err
-		}
-
-		secret = secretMap[c.secretName]
-	} else {
-		if err := json.Unmarshal(res.Bytes(), &secret); err != nil {
-			return err
-		}
+		return c.handleSecretSelection(output, cmd)
 	}
 
-	if c.quiet {
-		return ProcessSecret(cmd.OutOrStdout(), io.Discard, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll)
+	if err := json.Unmarshal(output, &secret); err != nil {
+		return secret, fmt.Errorf("failed to parse kubectl output as secret: %w", err)
 	}
 
-	return ProcessSecret(cmd.OutOrStdout(), cmd.OutOrStderr(), cmd.InOrStdin(), secret, c.secretKey, c.decodeAll)
+	return secret, nil
+}
+
+// handleSecretSelection handles the interactive selection of a secret from a list
+func (c *CommandOpts) handleSecretSelection(output []byte, cmd *cobra.Command) (Secret, error) {
+	var secretList SecretList
+	if err := json.Unmarshal(output, &secretList); err != nil {
+		return Secret{}, fmt.Errorf("failed to parse kubectl output as secret list: %w", err)
+	}
+
+	// Since we don't query valid namespaces, we'll avoid prompting the user to select a secret if we didn't retrieve any secrets
+	if len(secretList.Items) == 0 {
+		return Secret{}, ErrNoSecretFound
+	}
+
+	opts := []string{}
+	secretMap := map[string]Secret{}
+	for _, v := range secretList.Items {
+		opts = append(opts, v.Metadata.Name)
+		secretMap[v.Metadata.Name] = v
+	}
+
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title(secretListTitle).
+				Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
+				Options(huh.NewOptions(opts...)...).
+				Value(&c.secretName),
+		),
+	).WithProgramOptions(tea.WithInput(cmd.InOrStdin()), tea.WithOutput(cmd.OutOrStdout())).Run()
+	if err != nil {
+		return Secret{}, fmt.Errorf("failed to get user selection: %w", err)
+	}
+
+	return secretMap[c.secretName], nil
 }
 
 // ProcessSecret takes the secret and user input to determine the output
 func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret Secret, secretKey string, decodeAll bool) error {
+	return ProcessSecretWithOptions(outWriter, errWriter, inputReader, secret, secretKey, decodeAll, "text")
+}
+
+// decodeAllData decodes all data in the secret
+func decodeAllData(secret Secret, data SecretData) (map[string]string, error) {
+	decodedData := make(map[string]string)
+	for k, v := range data {
+		s, err := secret.Decode(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode key %s: %w", k, err)
+		}
+		decodedData[k] = s
+	}
+	return decodedData, nil
+}
+
+// ProcessSecretWithOptions takes the secret and user input with full options
+func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Reader, secret Secret, secretKey string, decodeAll bool, outputFormat string) error {
 	data := secret.Data
 	if len(data) == 0 {
 		return ErrSecretEmpty
@@ -219,20 +282,34 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 	sort.Strings(keys)
 
 	if decodeAll {
-		for _, k := range keys {
-			s, _ := secret.Decode(data[k])
-			_, _ = fmt.Fprintf(outWriter, "%s='%s'\n", k, s)
+		decodedData, err := decodeAllData(secret, data)
+		if err != nil {
+			return err
 		}
+		return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
 	} else if len(data) == 1 {
-		for k, v := range data {
-			_, _ = fmt.Fprintf(errWriter, singleKeyDescription+"\n", k)
-			s, _ := secret.Decode(v)
-			_, _ = fmt.Fprintf(outWriter, "%s\n", s)
+		if _, err := fmt.Fprintf(errWriter, singleKeyDescription+"\n", keys[0]); err != nil {
+			return fmt.Errorf("failed to write to stderr: %w", err)
 		}
+		decodedData, err := decodeAllData(secret, data)
+		if err != nil {
+			return err
+		}
+		return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
 	} else if secretKey != "" {
 		if v, ok := data[secretKey]; ok {
-			s, _ := secret.Decode(v)
-			_, _ = fmt.Fprintf(outWriter, "%s\n", s)
+			s, err := secret.Decode(v)
+			if err != nil {
+				return fmt.Errorf("failed to decode key %s: %w", secretKey, err)
+			}
+			if outputFormat == "text" {
+				if _, err := fmt.Fprintf(outWriter, "%s\n", s); err != nil {
+					return fmt.Errorf("failed to write output: %w", err)
+				}
+			} else {
+				decodedData := map[string]string{secretKey: s}
+				return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
+			}
 		} else {
 			return ErrSecretKeyNotFound
 		}
@@ -259,8 +336,54 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 			decodeAll = true
 		}
 
-		return ProcessSecret(outWriter, errWriter, inputReader, secret, selection, decodeAll)
+		return ProcessSecretWithOptions(outWriter, errWriter, inputReader, secret, selection, decodeAll, outputFormat)
 	}
 
+	return nil
+}
+
+// buildOutputMap builds the common output structure for JSON/YAML formats
+func buildOutputMap(secret Secret, decodedData map[string]string) map[string]any {
+	return map[string]any{
+		"name":      secret.Metadata.Name,
+		"namespace": secret.Metadata.Namespace,
+		"type":      secret.Type,
+		"data":      decodedData,
+	}
+}
+
+// outputFormattedSecret outputs the secret in the specified format
+func outputFormattedSecret(outWriter io.Writer, secret Secret, decodedData map[string]string, outputFormat string) error {
+	switch outputFormat {
+	case "json":
+		return outputJSON(outWriter, secret, decodedData)
+	case "yaml":
+		return outputYAML(outWriter, secret, decodedData)
+	default:
+		return outputText(outWriter, decodedData)
+	}
+}
+
+// outputJSON outputs secret data as JSON
+func outputJSON(outWriter io.Writer, secret Secret, decodedData map[string]string) error {
+	output := buildOutputMap(secret, decodedData)
+	encoder := json.NewEncoder(outWriter)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(output)
+}
+
+// outputYAML outputs secret data as YAML
+func outputYAML(outWriter io.Writer, secret Secret, decodedData map[string]string) error {
+	output := buildOutputMap(secret, decodedData)
+	return yaml.NewEncoder(outWriter).Encode(output)
+}
+
+// outputText outputs secret data as plain text
+func outputText(outWriter io.Writer, decodedData map[string]string) error {
+	for k, v := range decodedData {
+		if _, err := fmt.Fprintf(outWriter, "%s='%s'\n", k, v); err != nil {
+			return fmt.Errorf("failed to write output: %w", err)
+		}
+	}
 	return nil
 }

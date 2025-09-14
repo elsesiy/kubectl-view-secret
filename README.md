@@ -37,6 +37,33 @@ Instead you can now do:
     # suppress info output
     kubectl view-secret <secret> -q/--quiet
 
+    # output in JSON format
+    kubectl view-secret <secret> -o json
+
+    # output in YAML format
+    kubectl view-secret <secret> -o yaml
+
+## Features
+
+### Output Formats
+- **Text**: Default human-readable format
+- **JSON**: Structured output for automation and scripting
+- **YAML**: Alternative structured format
+
+### Secret Type Support
+Supports decoding various Kubernetes secret types:
+- **Opaque**: Standard base64 encoded secrets
+- **Helm**: Double base64 encoded + gzip compressed Helm release data
+- **TLS**: PEM encoded certificates and private keys
+- **Docker Config**: JSON configuration for Docker registries
+- **SSH Auth**: SSH private keys
+- **Basic Auth**: Username/password credentials
+- **Service Account Tokens**: JWT tokens
+
+### Interactive Mode
+- **Secret Selection**: When no secret is specified, provides an interactive list to choose from
+- **Key Selection**: When multiple keys exist, allows selecting specific keys or viewing all
+
 ## Usage
 
 ### Krew
@@ -64,7 +91,7 @@ Thanks to external contributions the plugin is available in the Arch user reposi
 | [git](https://aur.archlinux.org/packages/kubectl-view-secret-git) | [@aryklein](https://github.com/aryklein) |
 
 #### Nix
-You can install the latest version from Nixpkgs ([24.11](https://search.nixos.org/packages?channel=24.11&show=kubectl-view-secret&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret), [unstable](https://search.nixos.org/packages?channel=unstable&show=kubectl-view-secret&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret)) or try it via a temporary nix-shell:
+You can install the latest version from Nixpkgs ([25.05](https://search.nixos.org/packages?channel=25.05&show=kubectl-view-secret&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret), [unstable](https://search.nixos.org/packages?channel=unstable&show=kubectl-view-secret&from=0&size=50&sort=relevance&type=packages&query=kubectl-view-secret)) or try it via a temporary nix-shell:
 
 ```
 nix-shell -p kubectl-view-secret

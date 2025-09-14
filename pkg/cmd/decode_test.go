@@ -12,6 +12,7 @@ import (
 func TestDecode(t *testing.T) {
 	tests := map[string]struct {
 		data    func() Secret
+		key     string // key to decode from the secret data
 		want    string
 		wantErr error
 	}{
@@ -25,6 +26,7 @@ func TestDecode(t *testing.T) {
 					Type: Opaque,
 				}
 			},
+			"key",
 			"test\n",
 			nil,
 		},
@@ -38,6 +40,7 @@ func TestDecode(t *testing.T) {
 					Type: Opaque,
 				}
 			},
+			"key",
 			"",
 			base64.CorruptInputError(7),
 		},
@@ -65,6 +68,7 @@ func TestDecode(t *testing.T) {
 
 				return res
 			},
+			"key",
 			"test\n",
 			nil,
 		},
@@ -78,8 +82,92 @@ func TestDecode(t *testing.T) {
 					Type: BasicAuth,
 				}
 			},
+			"key",
 			"test\n",
 			nil,
+		},
+		// test docker config json
+		"docker config json": {
+			func() Secret {
+				dockerConfig := `{"auths":{"registry.example.com":{"auth":"dXNlcjpwYXNz"}}}`
+				return Secret{
+					Data: map[string]string{
+						".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(dockerConfig)),
+					},
+					Type: DockerConfigJSON,
+				}
+			},
+			".dockerconfigjson",
+			`{
+  "auths": {
+    "registry.example.com": {
+      "auth": "dXNlcjpwYXNz"
+    }
+  }
+}`,
+			nil,
+		},
+		// test docker config (legacy format)
+		"docker config legacy": {
+			func() Secret {
+				dockerConfig := `{"registry.example.com":{"auth":"dXNlcjpwYXNz"}}`
+				return Secret{
+					Data: map[string]string{
+						".dockercfg": base64.StdEncoding.EncodeToString([]byte(dockerConfig)),
+					},
+					Type: DockerCfg,
+				}
+			},
+			".dockercfg",
+			`{
+  "registry.example.com": {
+    "auth": "dXNlcjpwYXNz"
+  }
+}`,
+			nil,
+		},
+		// test docker config with invalid json
+		"docker config invalid json": {
+			func() Secret {
+				invalidJSON := `{"invalid": json}`
+				return Secret{
+					Data: map[string]string{
+						".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(invalidJSON)),
+					},
+					Type: DockerConfigJSON,
+				}
+			},
+			".dockerconfigjson",
+			`{"invalid": json}`,
+			nil,
+		},
+		// test unknown secret type
+		"unknown type": {
+			func() Secret {
+				return Secret{
+					Data: map[string]string{
+						"key": "dGVzdAo=",
+					},
+					Type: "unknown",
+				}
+			},
+			"key",
+			"test\n",
+			nil,
+		},
+		// test helm with invalid base64
+		"helm invalid base64": {
+			func() Secret {
+				return Secret{
+					Data: map[string]string{
+						"key": "invalid-base64!",
+					},
+					Type: Helm,
+				}
+			},
+			"key",
+			"",
+			base64.CorruptInputError(7), // Should return error for invalid base64
 		},
 	}
 
@@ -89,7 +177,7 @@ func TestDecode(t *testing.T) {
 
 			data := tt.data()
 
-			got, err := data.Decode(data.Data["key"])
+			got, err := data.Decode(data.Data[tt.key])
 			if err != nil {
 				if tt.wantErr == nil {
 					assert.Fail(t, "unexpected error", err)

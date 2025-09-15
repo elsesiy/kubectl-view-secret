@@ -43,6 +43,48 @@ Instead you can now do:
     # output in YAML format
     kubectl view-secret <secret> -o yaml
 
+## Bash Completion
+
+This plugin supports bash completion for kubectl versions 1.26 and later. To enable completion:
+
+### Step 1: Enable kubectl completion
+
+Follow the [Kubernetes docs](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#optional-kubectl-configurations-and-plugins) to install shell completion.
+
+### Step 2: Create the plugin completion script
+```bash
+# Place the following completion script somewhere in your $PATH, e.g. /usr/local/bin in this context
+sudo cat <<'EOF' >/usr/local/bin/kubectl_complete-view_secret
+#!/bin/bash
+kubectl view-secret __complete "$@"
+EOF
+
+# Make it executable
+sudo chmod +x /usr/local/bin/kubectl_complete-view_secret
+```
+
+Then restart your shell or run:
+```bash
+source ~/.bashrc
+```
+
+### Step 3: Verify setup
+```bash
+# Check bash-completion is loaded
+type _get_comp_words_by_ref
+
+# Check kubectl completion is loaded
+type _kubectl
+
+# Test completion
+kubectl view-secret <TAB>
+```
+
+Now you can use Tab completion for:
+- Secret names: `kubectl view-secret <TAB>`
+- Secret keys: `kubectl view-secret <secret> <TAB>`
+- Namespaces: `kubectl view-secret <secret> -n <TAB>`
+
 ## Features
 
 ### Output Formats

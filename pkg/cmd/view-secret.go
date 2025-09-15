@@ -108,6 +108,19 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().StringVar(&res.impersonateAsGroups, "as-group", res.impersonateAsGroups, "Groups to impersonate for the operation. Multipe groups can be specified by comma separated.")
 	cmd.Flags().StringVarP(&res.outputFormat, "output", "o", "text", "output format: text, json, yaml")
 
+	// Add shell completion functions
+	_ = cmd.RegisterFlagCompletionFunc("namespace", getNamespaces)
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		switch len(args) {
+		case 0:
+			return getSecrets(cmd, args, toComplete)
+		case 1:
+			return getDataKeys(cmd, args, toComplete)
+		default:
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+	}
+
 	return cmd
 }
 

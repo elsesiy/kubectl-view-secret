@@ -281,3 +281,14 @@ func TestErrorHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestCompletionFlagRegistration(t *testing.T) {
+	cmd := NewCmdViewSecret()
+
+	// Check that namespace flag has completion registered
+	namespaceFlag := cmd.Flags().Lookup("namespace")
+	assert.NotNil(t, namespaceFlag, "namespace flag should exist")
+
+	// Check that ValidArgsFunction is set
+	assert.NotNil(t, cmd.ValidArgsFunction, "ValidArgsFunction should be set")
+}

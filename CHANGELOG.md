@@ -1,8 +1,29 @@
 # Changelog
 
-## [0.14.0](https://github.com/elsesiy/kubectl-view-secret/tree/0.14.0) (2025-03-31)
+## [v0.15.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.15.0) (2025-09-15)
 
-[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.13.0...0.14.0)
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.14.0...v0.15.0)
+
+**Closed issues:**
+
+- Add support for different output formats [\#67](https://github.com/elsesiy/kubectl-view-secret/issues/67)
+- Add missing secret types [\#66](https://github.com/elsesiy/kubectl-view-secret/issues/66)
+- Update to go1.25 [\#64](https://github.com/elsesiy/kubectl-view-secret/issues/64)
+- Update GitHub runner labels [\#62](https://github.com/elsesiy/kubectl-view-secret/issues/62)
+- returned ordered secret list [\#56](https://github.com/elsesiy/kubectl-view-secret/issues/56)
+- Add bash completion support [\#3](https://github.com/elsesiy/kubectl-view-secret/issues/3)
+
+**Merged pull requests:**
+
+- Add bash completion support [\#68](https://github.com/elsesiy/kubectl-view-secret/pull/68) ([elsesiy](https://github.com/elsesiy))
+- Cover remaining secret types & misc [\#65](https://github.com/elsesiy/kubectl-view-secret/pull/65) ([elsesiy](https://github.com/elsesiy))
+- Bump to go1.25 [\#63](https://github.com/elsesiy/kubectl-view-secret/pull/63) ([elsesiy](https://github.com/elsesiy))
+- Bump go1.24.3 & dependencies, update GH runner images [\#61](https://github.com/elsesiy/kubectl-view-secret/pull/61) ([elsesiy](https://github.com/elsesiy))
+- Ensure sorting applies to all callsites [\#60](https://github.com/elsesiy/kubectl-view-secret/pull/60) ([elsesiy](https://github.com/elsesiy))
+
+## [v0.14.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.14.0) (2025-03-31)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.13.0...v0.14.0)
 
 **Closed issues:**
 

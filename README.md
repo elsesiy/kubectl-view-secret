@@ -54,7 +54,7 @@ Follow the [Kubernetes docs](https://kubernetes.io/docs/tasks/tools/install-kube
 ### Step 2: Create the plugin completion script
 ```bash
 # Place the following completion script somewhere in your $PATH, e.g. /usr/local/bin in this context
-sudo cat <<'EOF' >/usr/local/bin/kubectl_complete-view_secret
+cat << "EOF" | sudo tee /usr/local/bin/kubectl_complete-view_secret > /dev/null
 #!/bin/bash
 kubectl view-secret __complete "$@"
 EOF

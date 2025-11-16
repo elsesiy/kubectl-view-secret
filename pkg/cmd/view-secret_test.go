@@ -284,15 +284,15 @@ func TestErrorHandling(t *testing.T) {
 
 func TestOutputText(t *testing.T) {
 	tests := map[string]struct {
-		decodedData map[string]string
-		want        string
+		sortedData []KeyValue
+		want       string
 	}{
 		"single key": {
-			map[string]string{"key": "value"},
+			[]KeyValue{{Key: "key", Value: "value"}},
 			"value\n",
 		},
 		"multiple keys": {
-			map[string]string{"key1": "value1", "key2": "value2"},
+			[]KeyValue{{Key: "key1", Value: "value1"}, {Key: "key2", Value: "value2"}},
 			"key1='value1'\nkey2='value2'\n",
 		},
 	}
@@ -300,7 +300,105 @@ func TestOutputText(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			var buf bytes.Buffer
-			err := outputText(&buf, tt.decodedData)
+			err := outputText(&buf, tt.sortedData)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, buf.String())
+		})
+	}
+}
+
+func TestOutputJSON(t *testing.T) {
+	secret := Secret{
+		Metadata: Metadata{Name: "test-secret", Namespace: "default"},
+		Type:     Opaque,
+	}
+	tests := map[string]struct {
+		sortedData []KeyValue
+		want       string
+	}{
+		"single key": {
+			[]KeyValue{{Key: "key", Value: "value"}},
+			`{
+  "data": [
+    {
+      "key": "key",
+      "value": "value"
+    }
+  ],
+  "name": "test-secret",
+  "namespace": "default",
+  "type": "Opaque"
+}
+`,
+		},
+		"multiple keys": {
+			[]KeyValue{{Key: "key1", Value: "value1"}, {Key: "key2", Value: "value2"}},
+			`{
+  "data": [
+    {
+      "key": "key1",
+      "value": "value1"
+    },
+    {
+      "key": "key2",
+      "value": "value2"
+    }
+  ],
+  "name": "test-secret",
+  "namespace": "default",
+  "type": "Opaque"
+}
+`,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := outputJSON(&buf, secret, tt.sortedData)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, buf.String())
+		})
+	}
+}
+
+func TestOutputYAML(t *testing.T) {
+	secret := Secret{
+		Metadata: Metadata{Name: "test-secret", Namespace: "default"},
+		Type:     Opaque,
+	}
+	tests := map[string]struct {
+		sortedData []KeyValue
+		want       string
+	}{
+		"single key": {
+			[]KeyValue{{Key: "key", Value: "value"}},
+			`data:
+    - key: key
+      value: value
+name: test-secret
+namespace: default
+type: Opaque
+`,
+		},
+		"multiple keys": {
+			[]KeyValue{{Key: "key1", Value: "value1"}, {Key: "key2", Value: "value2"}},
+			`data:
+    - key: key1
+      value: value1
+    - key: key2
+      value: value2
+name: test-secret
+namespace: default
+type: Opaque
+`,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := outputYAML(&buf, secret, tt.sortedData)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, buf.String())
 		})

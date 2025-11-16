@@ -1,4 +1,10 @@
 ---
+archives:
+  - ids:
+      - kubectl-view-secret
+    name_template: '{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    wrap_in_directory: false
+    formats: [tar.gz]
 before:
   hooks:
     - go mod download
@@ -16,9 +22,4 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
-archives:
-  - builds:
-      - kubectl-view-secret
-    name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    wrap_in_directory: false
-    format: tar.gz
+version: 2

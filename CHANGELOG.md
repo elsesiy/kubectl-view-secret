@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.15.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.15.1) (2025-11-16)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.15.0...v0.15.1)
+
+**Closed issues:**
+
+- Bump dependencies [\#74](https://github.com/elsesiy/kubectl-view-secret/issues/74)
+- Viewing a key now wraps the output in $key='' [\#71](https://github.com/elsesiy/kubectl-view-secret/issues/71)
+- zsh friendly ? [\#70](https://github.com/elsesiy/kubectl-view-secret/issues/70)
+
+**Merged pull requests:**
+
+- Bump to go1.25.4 & update module dependencies [\#75](https://github.com/elsesiy/kubectl-view-secret/pull/75) ([elsesiy](https://github.com/elsesiy))
+- Fix single key text output formatting [\#73](https://github.com/elsesiy/kubectl-view-secret/pull/73) ([elsesiy](https://github.com/elsesiy))
+- Docs: update userguide command for adding completion script to /usr/local/bin [\#69](https://github.com/elsesiy/kubectl-view-secret/pull/69) ([ArjunDandagi](https://github.com/ArjunDandagi))
+
 ## [v0.15.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.15.0) (2025-09-15)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.14.0...v0.15.0)

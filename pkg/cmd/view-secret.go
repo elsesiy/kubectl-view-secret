@@ -393,8 +393,22 @@ func outputYAML(outWriter io.Writer, secret Secret, decodedData map[string]strin
 
 // outputText outputs secret data as plain text
 func outputText(outWriter io.Writer, decodedData map[string]string) error {
+	var format string
+
+	if len(decodedData) == 1 {
+		format = "%s\n"
+	} else {
+		format = "%s='%s'\n"
+	}
+
 	for k, v := range decodedData {
-		if _, err := fmt.Fprintf(outWriter, "%s='%s'\n", k, v); err != nil {
+		var args []any
+		if len(decodedData) == 1 {
+			args = []any{v}
+		} else {
+			args = []any{k, v}
+		}
+		if _, err := fmt.Fprintf(outWriter, format, args...); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)
 		}
 	}

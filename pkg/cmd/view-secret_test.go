@@ -282,6 +282,31 @@ func TestErrorHandling(t *testing.T) {
 	}
 }
 
+func TestOutputText(t *testing.T) {
+	tests := map[string]struct {
+		decodedData map[string]string
+		want        string
+	}{
+		"single key": {
+			map[string]string{"key": "value"},
+			"value\n",
+		},
+		"multiple keys": {
+			map[string]string{"key1": "value1", "key2": "value2"},
+			"key1='value1'\nkey2='value2'\n",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := outputText(&buf, tt.decodedData)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, buf.String())
+		})
+	}
+}
+
 func TestCompletionFlagRegistration(t *testing.T) {
 	cmd := NewCmdViewSecret()
 

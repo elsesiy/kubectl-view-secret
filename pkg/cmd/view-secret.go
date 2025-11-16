@@ -15,6 +15,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// KeyValue represents a key-value pair for sorted output
+type KeyValue struct {
+	Key   string `json:"key" yaml:"key"`
+	Value string `json:"value" yaml:"value"`
+}
+
 const (
 	example = `
 	# print secret keys
@@ -268,15 +274,21 @@ func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret
 	return ProcessSecretWithOptions(outWriter, errWriter, inputReader, secret, secretKey, decodeAll, "text")
 }
 
-// decodeAllData decodes all data in the secret
-func decodeAllData(secret Secret, data SecretData) (map[string]string, error) {
-	decodedData := make(map[string]string)
-	for k, v := range data {
+// decodeAllData decodes all data in the secret and returns sorted key-value pairs
+func decodeAllData(secret Secret, data SecretData) ([]KeyValue, error) {
+	var keys []string
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var decodedData []KeyValue
+	for _, k := range keys {
+		v := data[k]
 		s, err := secret.Decode(v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode key %s: %w", k, err)
 		}
-		decodedData[k] = s
+		decodedData = append(decodedData, KeyValue{Key: k, Value: s})
 	}
 	return decodedData, nil
 }
@@ -320,7 +332,12 @@ func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Rea
 					return fmt.Errorf("failed to write output: %w", err)
 				}
 			} else {
-				decodedData := map[string]string{secretKey: s}
+				decodedData := []KeyValue{
+					{
+						Key:   secretKey,
+						Value: s,
+					},
+				}
 				return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
 			}
 		} else {
@@ -356,17 +373,17 @@ func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Rea
 }
 
 // buildOutputMap builds the common output structure for JSON/YAML formats
-func buildOutputMap(secret Secret, decodedData map[string]string) map[string]any {
+func buildOutputMap(secret Secret, sortedData []KeyValue) map[string]any {
 	return map[string]any{
 		"name":      secret.Metadata.Name,
 		"namespace": secret.Metadata.Namespace,
 		"type":      secret.Type,
-		"data":      decodedData,
+		"data":      sortedData,
 	}
 }
 
 // outputFormattedSecret outputs the secret in the specified format
-func outputFormattedSecret(outWriter io.Writer, secret Secret, decodedData map[string]string, outputFormat string) error {
+func outputFormattedSecret(outWriter io.Writer, secret Secret, decodedData []KeyValue, outputFormat string) error {
 	switch outputFormat {
 	case "json":
 		return outputJSON(outWriter, secret, decodedData)
@@ -378,7 +395,7 @@ func outputFormattedSecret(outWriter io.Writer, secret Secret, decodedData map[s
 }
 
 // outputJSON outputs secret data as JSON
-func outputJSON(outWriter io.Writer, secret Secret, decodedData map[string]string) error {
+func outputJSON(outWriter io.Writer, secret Secret, decodedData []KeyValue) error {
 	output := buildOutputMap(secret, decodedData)
 	encoder := json.NewEncoder(outWriter)
 	encoder.SetIndent("", "  ")
@@ -386,27 +403,27 @@ func outputJSON(outWriter io.Writer, secret Secret, decodedData map[string]strin
 }
 
 // outputYAML outputs secret data as YAML
-func outputYAML(outWriter io.Writer, secret Secret, decodedData map[string]string) error {
+func outputYAML(outWriter io.Writer, secret Secret, decodedData []KeyValue) error {
 	output := buildOutputMap(secret, decodedData)
 	return yaml.NewEncoder(outWriter).Encode(output)
 }
 
 // outputText outputs secret data as plain text
-func outputText(outWriter io.Writer, decodedData map[string]string) error {
+func outputText(outWriter io.Writer, sortedData []KeyValue) error {
 	var format string
 
-	if len(decodedData) == 1 {
+	if len(sortedData) == 1 {
 		format = "%s\n"
 	} else {
 		format = "%s='%s'\n"
 	}
 
-	for k, v := range decodedData {
+	for _, kv := range sortedData {
 		var args []any
-		if len(decodedData) == 1 {
-			args = []any{v}
+		if len(sortedData) == 1 {
+			args = []any{kv.Value}
 		} else {
-			args = []any{k, v}
+			args = []any{kv.Key, kv.Value}
 		}
 		if _, err := fmt.Fprintf(outWriter, format, args...); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)

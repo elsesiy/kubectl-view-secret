@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.16.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.16.0) (2026-04-23)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.15.1...v0.16.0)
+
+**Closed issues:**
+
+- Update to go1.26 [\#78](https://github.com/elsesiy/kubectl-view-secret/issues/78)
+- Update goreleaser config [\#76](https://github.com/elsesiy/kubectl-view-secret/issues/76)
+
+**Merged pull requests:**
+
+- Bump to go1.26 & update depedencies [\#79](https://github.com/elsesiy/kubectl-view-secret/pull/79) ([elsesiy](https://github.com/elsesiy))
+- Update goreleaser manifest [\#77](https://github.com/elsesiy/kubectl-view-secret/pull/77) ([elsesiy](https://github.com/elsesiy))
+
 ## [v0.15.1](https://github.com/elsesiy/kubectl-view-secret/tree/v0.15.1) (2025-11-16)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.15.0...v0.15.1)

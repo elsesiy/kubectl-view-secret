@@ -289,55 +289,30 @@ func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Rea
 
 	keys := slices.Sorted(maps.Keys(data))
 
-	if decodeAll {
-		decodedData, err := decodeAllData(secret, keys)
-		if err != nil {
-			return err
+	switch {
+	case decodeAll:
+	case secretKey != "":
+		v, ok := data[secretKey]
+		if !ok {
+			return ErrSecretKeyNotFound
 		}
-		return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
-	} else if len(data) == 1 {
+		s, err := secret.Decode(v)
+		if err != nil {
+			return fmt.Errorf("failed to decode key %s: %w", secretKey, err)
+		}
+		return outputFormattedSecret(outWriter, secret, []KeyValue{{Key: secretKey, Value: s}}, outputFormat)
+	case len(keys) == 1:
 		if _, err := fmt.Fprintf(errWriter, singleKeyDescription+"\n", keys[0]); err != nil {
 			return fmt.Errorf("failed to write to stderr: %w", err)
 		}
-		decodedData, err := decodeAllData(secret, keys)
-		if err != nil {
-			return err
-		}
-		return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
-	} else if secretKey != "" {
-		if v, ok := data[secretKey]; ok {
-			s, err := secret.Decode(v)
-			if err != nil {
-				return fmt.Errorf("failed to decode key %s: %w", secretKey, err)
-			}
-			if outputFormat == "text" {
-				if _, err := fmt.Fprintf(outWriter, "%s\n", s); err != nil {
-					return fmt.Errorf("failed to write output: %w", err)
-				}
-			} else {
-				decodedData := []KeyValue{
-					{
-						Key:   secretKey,
-						Value: s,
-					},
-				}
-				return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
-			}
-		} else {
-			return ErrSecretKeyNotFound
-		}
-	} else {
-		opts := make([]string, len(keys)+1)
-		opts[0] = "all"
-		copy(opts[1:], keys)
-
+	default:
 		var selection string
 		err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
 					Title(secretTitle).
 					Description(fmt.Sprintf(secretDescription, len(data), secret.Metadata.Name)).
-					Options(huh.NewOptions(opts...)...).
+					Options(huh.NewOptions(append([]string{"all"}, keys...)...)...).
 					Value(&selection),
 			),
 		).WithProgramOptions(tea.WithInput(inputReader), tea.WithOutput(outWriter)).Run()
@@ -345,14 +320,14 @@ func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Rea
 			return err
 		}
 
-		if selection == "all" {
-			decodeAll = true
-		}
-
-		return ProcessSecretWithOptions(outWriter, errWriter, inputReader, secret, selection, decodeAll, outputFormat)
+		return ProcessSecretWithOptions(outWriter, errWriter, inputReader, secret, selection, selection == "all", outputFormat)
 	}
 
-	return nil
+	decodedData, err := decodeAllData(secret, keys)
+	if err != nil {
+		return err
+	}
+	return outputFormattedSecret(outWriter, secret, decodedData, outputFormat)
 }
 
 // buildOutputMap builds the common output structure for JSON/YAML formats

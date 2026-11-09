@@ -40,9 +40,9 @@ func TestCompletion(t *testing.T) {
 	}{
 		"secrets": {
 			args:     nil,
-			stdout:   "alpha beta gamma",
+			stdout:   "alpha   Opaque   2   5d\nbeta   helm.sh/release.v1   1   2h\ngamma   Opaque   1   1m\n",
 			want:     []string{"alpha", "beta", "gamma"},
-			wantArgs: "get secrets -o jsonpath={.items[*].metadata.name} " + wantFlags,
+			wantArgs: "get secrets --no-headers " + wantFlags,
 		},
 		"keys of a secret are sorted": {
 			args:     []string{"mysecret"},
@@ -54,7 +54,7 @@ func TestCompletion(t *testing.T) {
 			args:     nil,
 			exitCode: 1,
 			want:     nil,
-			wantArgs: "get secrets -o jsonpath={.items[*].metadata.name} " + wantFlags,
+			wantArgs: "get secrets --no-headers " + wantFlags,
 		},
 		"no completion after secret and key": {
 			args: []string{"mysecret", "key"},

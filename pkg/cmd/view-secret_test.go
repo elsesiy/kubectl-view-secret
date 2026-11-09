@@ -110,7 +110,7 @@ func TestNewCmdViewSecret(t *testing.T) {
 	}
 }
 
-func TestProcessSecret(t *testing.T) {
+func TestProcessSecretWithOptions(t *testing.T) {
 	tests := map[string]struct {
 		secretData SecretData
 		secretType SecretType
@@ -223,7 +223,7 @@ func TestProcessSecret(t *testing.T) {
 				readBuf = *strings.NewReader(test.feedkeys)
 			}
 
-			err := ProcessSecret(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData, Type: test.secretType}, test.secretKey, test.decodeAll)
+			err := ProcessSecretWithOptions(&stdOutBuf, &stdErrBuf, &readBuf, Secret{Data: test.secretData, Type: test.secretType}, test.secretKey, test.decodeAll, "text")
 
 			if test.err != nil {
 				assert.Equal(t, err, test.err)

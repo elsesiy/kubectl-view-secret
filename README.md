@@ -43,6 +43,9 @@ Instead you can now do:
     # output in YAML format
     kubectl view-secret <secret> -o yaml
 
+    # impersonate a user and groups (repeat --as-group for each group)
+    kubectl view-secret <secret> --as <user> --as-group <group1> --as-group <group2>
+
 ## Bash Completion
 
 This plugin supports bash completion for kubectl versions 1.26 and later. To enable completion:
@@ -84,6 +87,8 @@ Now you can use Tab completion for:
 - Secret names: `kubectl view-secret <TAB>`
 - Secret keys: `kubectl view-secret <secret> <TAB>`
 - Namespaces: `kubectl view-secret <secret> -n <TAB>`
+
+Completion honors `-n`, `-c`, `-k`, `--as` and `--as-group`.
 
 ## Features
 

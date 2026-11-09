@@ -1,13 +1,17 @@
 package cmd
 
 import (
+	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
-	"strings"
 )
+
+// maxHelmReleaseSize caps the decompressed size of a Helm release, so a crafted secret can't exhaust memory
+const maxHelmReleaseSize = 64 << 20
 
 // SecretDecoder is an interface for decoding various kubernetes secret resources
 type SecretDecoder interface {
@@ -62,15 +66,18 @@ func (s Secret) decodeHelm(input string) (string, error) {
 		return "", err
 	}
 
-	gz, err := gzip.NewReader(strings.NewReader(string(b64dhelm)))
+	gz, err := gzip.NewReader(bytes.NewReader(b64dhelm))
 	if err != nil {
 		return "", fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 	defer func() { _ = gz.Close() }()
 
-	data, err := io.ReadAll(gz)
+	data, err := io.ReadAll(io.LimitReader(gz, maxHelmReleaseSize+1))
 	if err != nil {
 		return "", err
+	}
+	if len(data) > maxHelmReleaseSize {
+		return "", fmt.Errorf("helm release is larger than %d bytes when decompressed", maxHelmReleaseSize)
 	}
 
 	return string(data), nil
@@ -86,7 +93,7 @@ func (s Secret) decodeDockerConfig(input string) (string, error) {
 	// Try to pretty-print JSON if it's valid
 	var jsonData any
 	if json.Unmarshal(b64d, &jsonData) == nil {
-		prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+		prettyJSON, err := json.Marshal(jsonData, jsontext.WithIndent("  "), json.Deterministic(true))
 		if err == nil {
 			return string(prettyJSON), nil
 		}

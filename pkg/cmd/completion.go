@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"encoding/json/v2"
 	"maps"
 	"slices"
 
-	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
 )
 

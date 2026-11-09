@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
-	"errors"
-	"reflect"
+	"encoding/json/v2"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,7 +57,7 @@ func TestSerialize(t *testing.T) {
 	tests := map[string]struct {
 		input   string
 		want    Secret
-		wantErr error
+		wantErr bool
 	}{
 		"empty opaque secret": {
 			input: invalidSecretJSON,
@@ -70,7 +68,7 @@ func TestSerialize(t *testing.T) {
 				},
 				Type: Opaque,
 			},
-			wantErr: errors.New("invalid character '}' looking for beginning of object key string"),
+			wantErr: true,
 		},
 		"valid opaque secret": {
 			input: validSecretJSON,
@@ -107,21 +105,13 @@ func TestSerialize(t *testing.T) {
 
 			var got Secret
 			err := json.Unmarshal([]byte(tt.input), &got)
-			if err != nil {
-				if tt.wantErr == nil {
-					assert.Fail(t, "unexpected error", err)
-				} else if err.Error() != tt.wantErr.Error() {
-					assert.Equal(t, tt.wantErr, err)
-				}
-				return
-			} else if tt.wantErr != nil {
-				assert.Fail(t, "expected error, got nil", tt.wantErr)
+			if tt.wantErr {
+				assert.Error(t, err)
 				return
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

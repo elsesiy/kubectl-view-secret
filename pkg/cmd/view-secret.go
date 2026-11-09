@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os/exec"
 	"slices"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
@@ -148,8 +149,7 @@ func (c *CommandOpts) ParseArgs(args []string) {
 // for secret selection, and outputs the decoded content in the
 // specified format.
 func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
-	commandArgs := c.buildKubectlCommand(cmd)
-	output, err := c.executeKubectlCommand(commandArgs)
+	output, err := runKubectl(c.buildKubectlCommand(cmd)...)
 	if err != nil {
 		return err
 	}
@@ -203,11 +203,11 @@ func (c *CommandOpts) buildKubectlCommand(cmd *cobra.Command) []string {
 	return commandArgs
 }
 
-// executeKubectlCommand executes the kubectl command and returns the output
-func (c *CommandOpts) executeKubectlCommand(commandArgs []string) ([]byte, error) {
+// runKubectl executes kubectl and returns its output
+func runKubectl(args ...string) ([]byte, error) {
 	var res, cmdErr bytes.Buffer
 
-	out := exec.Command("kubectl", commandArgs...)
+	out := exec.Command("kubectl", args...)
 	out.Stdout = &res
 	out.Stderr = &cmdErr
 	err := out.Run()
@@ -219,6 +219,16 @@ func (c *CommandOpts) executeKubectlCommand(commandArgs []string) ([]byte, error
 	}
 
 	return res.Bytes(), nil
+}
+
+// kubectlNames returns the names of all resources of the given kind
+func kubectlNames(kind string, flags ...string) ([]string, error) {
+	out, err := runKubectl(append([]string{"get", kind, "-o", "jsonpath={.items[*].metadata.name}"}, flags...)...)
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.Fields(string(out)), nil
 }
 
 // parseSecretResponse parses the kubectl output and handles secret selection

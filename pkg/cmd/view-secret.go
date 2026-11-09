@@ -73,15 +73,11 @@ var (
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
-	customContext   string
-	customNamespace string
-	decodeAll       bool
-	impersonateAs   string
-	kubeConfig      string
-	outputFormat    string
-	quiet           bool
-	secretKey       string
-	secretName      string
+	decodeAll    bool
+	outputFormat string
+	quiet        bool
+	secretKey    string
+	secretName   string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
@@ -107,11 +103,11 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().
 		BoolVarP(&res.decodeAll, "all", "a", res.decodeAll, "if true, decodes all secrets without specifying the individual secret keys")
 	cmd.Flags().BoolVarP(&res.quiet, "quiet", "q", res.quiet, "if true, suppresses info output")
-	cmd.Flags().
-		StringVarP(&res.customNamespace, "namespace", "n", res.customNamespace, "override the namespace defined in the current context")
-	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
-	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
-	cmd.Flags().StringVar(&res.impersonateAs, "as", res.impersonateAs, "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
+	// These flags are only forwarded to kubectl, see kubectlFlags
+	cmd.Flags().StringP("namespace", "n", "", "override the namespace defined in the current context")
+	cmd.Flags().StringP("context", "c", "", "override the current context")
+	cmd.Flags().StringP("kubeconfig", "k", "", "explicitly provide the kubeconfig to use")
+	cmd.Flags().String("as", "", "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
 	cmd.Flags().StringArray("as-group", nil, "Group to impersonate for the operation. Repeat the flag to specify multiple groups.")
 	cmd.Flags().StringVarP(&res.outputFormat, "output", "o", "text", "output format: text, json, yaml")
 
@@ -169,38 +165,29 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 
 // buildKubectlCommand builds the kubectl command arguments
 func (c *CommandOpts) buildKubectlCommand(cmd *cobra.Command) []string {
-	nsOverride, _ := cmd.Flags().GetString("namespace")
-	ctxOverride, _ := cmd.Flags().GetString("context")
-	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
-	impersonateOverride, _ := cmd.Flags().GetString("as")
-	impersonateGroupsOverride, _ := cmd.Flags().GetStringArray("as-group")
-
 	commandArgs := []string{"get", "secret", "-o", "json"}
 	if c.secretName != "" {
 		commandArgs = []string{"get", "secret", c.secretName, "-o", "json"}
 	}
 
-	if nsOverride != "" {
-		commandArgs = append(commandArgs, "-n", nsOverride)
+	return append(commandArgs, kubectlFlags(cmd)...)
+}
+
+// kubectlFlags returns the flags that select the cluster, namespace and identity kubectl talks to
+func kubectlFlags(cmd *cobra.Command) []string {
+	var args []string
+	for _, name := range []string{"namespace", "context", "kubeconfig", "as"} {
+		if v, _ := cmd.Flags().GetString(name); v != "" {
+			args = append(args, "--"+name, v)
+		}
 	}
 
-	if ctxOverride != "" {
-		commandArgs = append(commandArgs, "--context", ctxOverride)
+	groups, _ := cmd.Flags().GetStringArray("as-group")
+	for _, g := range groups {
+		args = append(args, "--as-group", g)
 	}
 
-	if kubeConfigOverride != "" {
-		commandArgs = append(commandArgs, "--kubeconfig", kubeConfigOverride)
-	}
-
-	if impersonateOverride != "" {
-		commandArgs = append(commandArgs, "--as", impersonateOverride)
-	}
-
-	for _, group := range impersonateGroupsOverride {
-		commandArgs = append(commandArgs, "--as-group", group)
-	}
-
-	return commandArgs
+	return args
 }
 
 // runKubectl executes kubectl and returns its output

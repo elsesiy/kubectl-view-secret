@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 )
@@ -92,7 +93,7 @@ func (s Secret) decodeDockerConfig(input string) (string, error) {
 	// Try to pretty-print JSON if it's valid
 	var jsonData any
 	if json.Unmarshal(b64d, &jsonData) == nil {
-		prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+		prettyJSON, err := json.Marshal(jsonData, jsontext.WithIndent("  "), json.Deterministic(true))
 		if err == nil {
 			return string(prettyJSON), nil
 		}

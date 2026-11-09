@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -12,7 +14,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
-	"github.com/goccy/go-json"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -348,10 +349,13 @@ func outputFormattedSecret(outWriter io.Writer, secret Secret, decodedData []Key
 
 // outputJSON outputs secret data as JSON
 func outputJSON(outWriter io.Writer, secret Secret, decodedData []KeyValue) error {
-	output := buildOutputMap(secret, decodedData)
-	encoder := json.NewEncoder(outWriter)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(output)
+	// Deterministic sorts the keys of the output map
+	out, err := json.Marshal(buildOutputMap(secret, decodedData), jsontext.WithIndent("  "), json.Deterministic(true))
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(outWriter, "%s\n", out)
+	return err
 }
 
 // outputYAML outputs secret data as YAML

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 	"testing"
 
@@ -61,20 +60,20 @@ func TestNewCmdViewSecret(t *testing.T) {
 		want     string
 		wantErr  error
 	}{
-		"all":                        {args: []string{"test", "--all"}, want: `key1='value1'\nkey2='value2'`},
+		"all":                        {args: []string{"test", "--all"}, want: "key1='value1\n'\nkey2='value2\n'\n"},
 		"custom ctx":                 {args: []string{"test", "--context", "gotest"}, wantErr: errors.New("Error in configuration: context was not found for specified context: gotest\nError: kubectl command failed: exit status 1")},
 		"custom kubecfg":             {args: []string{"test", "--kubeconfig", "cfg"}, wantErr: errors.New("error: stat cfg: no such file or directory\nError: kubectl command failed: exit status 1")},
 		"custom ns (does not exist)": {args: []string{"test", "--namespace", "bob"}, wantErr: errors.New("Error from server (NotFound): namespaces \"bob\" not found\nError: kubectl command failed: exit status 1")},
 		"custom ns (no secret)":      {args: []string{"test", "--namespace", "another"}, wantErr: errors.New("Error from server (NotFound): secrets \"test\" not found\nError: kubectl command failed: exit status 1")},
-		"custom ns (valid secret)":   {args: []string{"gopher", "--namespace", "another"}, want: `Viewing only available key: foo\nbar`},
-		"helm":                       {args: []string{"test3", "--namespace", "helm"}, want: `Viewing only available key: release\nhelm-test`},
-		"impersonate group":          {args: []string{"test", "--all", "--as", "gopher"}, want: `key1='value1'\nkey2='value2'`},
-		"impersonate user & group":   {args: []string{"test", "--all", "--as", "gopher", "--as-group", "golovers"}, want: `key1='value1'\nkey2='value2'`},
-		// make bootstrap sources 2 test secrets in the default namespace, select the first one and print all values
-		"interactive":                       {args: []string{"--all"}, feedkeys: "\r", want: `key1='value1'\nkey2='value2'`},
+		"custom ns (valid secret)":   {args: []string{"gopher", "--namespace", "another"}, want: "Viewing only available key: foo\nbar\n"},
+		"helm":                       {args: []string{"test3", "--namespace", "helm"}, want: "Viewing only available key: release\nhelm-test\n"},
+		"impersonate group":          {args: []string{"test", "--all", "--as", "gopher"}, want: "key1='value1\n'\nkey2='value2\n'\n"},
+		"impersonate user & group":   {args: []string{"test", "--all", "--as", "gopher", "--as-group", "golovers"}, want: "key1='value1\n'\nkey2='value2\n'\n"},
+		// make bootstrap sources several secrets in the default namespace, select the first one (basic-auth-secret) and print all values
+		"interactive":                       {args: []string{"--all"}, feedkeys: "\r", want: "password='secret123\n'\nusername='admin'\n"},
 		"interactive custom ns (no secret)": {args: []string{"--namespace", "empty"}, wantErr: ErrNoSecretFound},
 		"invalid arg count":                 {args: []string{"a", "b", "c"}, wantErr: errors.New("accepts between 0 and 2 arg(s), received 3")},
-		"quiet":                             {args: []string{"test2", "--quiet"}, want: `value1`},
+		"quiet":                             {args: []string{"test2", "--quiet"}, want: "value1\n"},
 		"unknown flag":                      {args: []string{"--version"}, wantErr: errors.New("unknown flag: --version")},
 	}
 
@@ -106,10 +105,7 @@ func TestNewCmdViewSecret(t *testing.T) {
 				return
 			}
 
-			_, err = io.ReadAll(outBuf)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.Contains(t, outBuf.String(), tt.want)
 		})
 	}
 }
@@ -232,6 +228,8 @@ func TestProcessSecret(t *testing.T) {
 			if test.err != nil {
 				assert.Equal(t, err, test.err)
 			} else {
+				assert.NoError(t, err)
+
 				gotStdOut := stdOutBuf.String()
 				gotStdErr := stdErrBuf.String()
 
@@ -247,37 +245,6 @@ func TestProcessSecret(t *testing.T) {
 					}
 				}
 			}
-		})
-	}
-}
-
-func TestErrorHandling(t *testing.T) {
-	tests := map[string]struct {
-		name        string
-		setupCmd    func(*CommandOpts)
-		expectError bool
-	}{
-		"invalid namespace": {
-			name: "invalid namespace",
-			setupCmd: func(opts *CommandOpts) {
-				opts.secretName = "test"
-				opts.customNamespace = "invalid-namespace"
-			},
-			expectError: true,
-		},
-		"nonexistent secret": {
-			name: "nonexistent secret",
-			setupCmd: func(opts *CommandOpts) {
-				opts.secretName = "nonexistent"
-			},
-			expectError: true,
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			opts := &CommandOpts{}
-			tt.setupCmd(opts)
 		})
 	}
 }

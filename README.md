@@ -88,6 +88,8 @@ Now you can use Tab completion for:
 - Secret keys: `kubectl view-secret <secret> <TAB>`
 - Namespaces: `kubectl view-secret <secret> -n <TAB>`
 
+Completion honors `-n`, `-c`, `-k`, `--as` and `--as-group`.
+
 ## Features
 
 ### Output Formats

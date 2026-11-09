@@ -28,8 +28,8 @@ func fakeKubectl(t *testing.T, stdout string, code int) (argsFile string) {
 }
 
 func TestCompletion(t *testing.T) {
-	flags := []string{"-n", "ns"}
-	wantFlags := "-n ns"
+	flags := []string{"-n", "ns", "-c", "ctx", "--as", "bob", "--as-group", "g1", "--as-group", "g2"}
+	wantFlags := "--namespace ns --context ctx --as bob --as-group g1 --as-group g2"
 
 	tests := map[string]struct {
 		args     []string

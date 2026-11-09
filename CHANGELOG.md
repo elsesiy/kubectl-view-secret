@@ -1,5 +1,43 @@
 # Changelog
 
+## [v0.17.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.17.0) (2026-11-09)
+
+[Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.16.0...v0.17.0)
+
+**Implemented enhancements:**
+
+- Replace goccy/go-json with encoding/json/v2 [\#90](https://github.com/elsesiy/kubectl-view-secret/issues/90)
+- Selecting a secret interactively downloads the data of all secrets [\#88](https://github.com/elsesiy/kubectl-view-secret/issues/88)
+
+**Fixed bugs:**
+
+- Helm release decoding has no size limit [\#89](https://github.com/elsesiy/kubectl-view-secret/issues/89)
+- Invalid --output values are silently treated as text [\#87](https://github.com/elsesiy/kubectl-view-secret/issues/87)
+- Unknown key is ignored for secrets with a single key [\#86](https://github.com/elsesiy/kubectl-view-secret/issues/86)
+- Shell completion ignores --context, --kubeconfig and impersonation flags [\#85](https://github.com/elsesiy/kubectl-view-secret/issues/85)
+- `--as-group` cannot impersonate more than one group [\#84](https://github.com/elsesiy/kubectl-view-secret/issues/84)
+
+**Closed issues:**
+
+- Document that text output is not shell safe [\#91](https://github.com/elsesiy/kubectl-view-secret/issues/91)
+- Remove unused wrapper and duplicate helpers [\#83](https://github.com/elsesiy/kubectl-view-secret/issues/83)
+- Command tests do not compare the expected output [\#82](https://github.com/elsesiy/kubectl-view-secret/issues/82)
+- Update to go1.27 [\#80](https://github.com/elsesiy/kubectl-view-secret/issues/80)
+
+**Merged pull requests:**
+
+- Document that text output is not shell safe [\#101](https://github.com/elsesiy/kubectl-view-secret/pull/101) ([elsesiy](https://github.com/elsesiy))
+- Replace goccy/go-json with encoding/json/v2 [\#100](https://github.com/elsesiy/kubectl-view-secret/pull/100) ([elsesiy](https://github.com/elsesiy))
+- Limit the decompressed size of Helm releases [\#99](https://github.com/elsesiy/kubectl-view-secret/pull/99) ([elsesiy](https://github.com/elsesiy))
+- List secret names without downloading their data [\#98](https://github.com/elsesiy/kubectl-view-secret/pull/98) ([elsesiy](https://github.com/elsesiy))
+- Reject invalid --output values [\#97](https://github.com/elsesiy/kubectl-view-secret/pull/97) ([elsesiy](https://github.com/elsesiy))
+- Fail on an unknown key for secrets with a single key [\#96](https://github.com/elsesiy/kubectl-view-secret/pull/96) ([elsesiy](https://github.com/elsesiy))
+- Forward context, kubeconfig and impersonation flags in completion [\#95](https://github.com/elsesiy/kubectl-view-secret/pull/95) ([elsesiy](https://github.com/elsesiy))
+- Support multiple `--as-group` flags [\#94](https://github.com/elsesiy/kubectl-view-secret/pull/94) ([elsesiy](https://github.com/elsesiy))
+- Remove unused wrapper and duplicate helpers [\#93](https://github.com/elsesiy/kubectl-view-secret/pull/93) ([elsesiy](https://github.com/elsesiy))
+- Assert command output in tests [\#92](https://github.com/elsesiy/kubectl-view-secret/pull/92) ([elsesiy](https://github.com/elsesiy))
+- Bump to go1.27 & update dependencies [\#81](https://github.com/elsesiy/kubectl-view-secret/pull/81) ([elsesiy](https://github.com/elsesiy))
+
 ## [v0.16.0](https://github.com/elsesiy/kubectl-view-secret/tree/v0.16.0) (2026-04-23)
 
 [Full Changelog](https://github.com/elsesiy/kubectl-view-secret/compare/v0.15.1...v0.16.0)

@@ -73,6 +73,7 @@ func TestNewCmdViewSecret(t *testing.T) {
 		"interactive":                       {args: []string{"--all"}, feedkeys: "\r", want: "password='secret123\n'\nusername='admin'\n"},
 		"interactive custom ns (no secret)": {args: []string{"--namespace", "empty"}, wantErr: ErrNoSecretFound},
 		"invalid arg count":                 {args: []string{"a", "b", "c"}, wantErr: errors.New("accepts between 0 and 2 arg(s), received 3")},
+		"invalid output format":             {args: []string{"test", "-o", "xml"}, wantErr: errors.New(`invalid output format "xml": must be one of text, json, yaml`)},
 		"single-key secret, unknown key":    {args: []string{"test2", "typo"}, wantErr: ErrSecretKeyNotFound},
 		"quiet":                             {args: []string{"test2", "--quiet"}, want: "value1\n"},
 		"unknown flag":                      {args: []string{"--version"}, wantErr: errors.New("unknown flag: --version")},

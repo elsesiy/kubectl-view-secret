@@ -60,6 +60,9 @@ const (
 	singleKeyDescription  = "Viewing only available key: %[1]s"
 )
 
+// outputFormats lists the values accepted by the --output flag
+var outputFormats = []string{"text", "json", "yaml"}
+
 var (
 	// ErrNoSecretFound is thrown when no secret name was provided but we didn't find any secrets
 	ErrNoSecretFound = errors.New("no secrets found")
@@ -94,6 +97,10 @@ func NewCmdViewSecret() *cobra.Command {
 		SilenceUsage: true,
 		Use:          "view-secret [secret-name] [secret-key]",
 		RunE: func(c *cobra.Command, args []string) error {
+			if !slices.Contains(outputFormats, res.outputFormat) {
+				return fmt.Errorf("invalid output format %q: must be one of %s", res.outputFormat, strings.Join(outputFormats, ", "))
+			}
+
 			res.ParseArgs(args)
 
 			return res.Retrieve(c)
@@ -109,7 +116,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().StringP("kubeconfig", "k", "", "explicitly provide the kubeconfig to use")
 	cmd.Flags().String("as", "", "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
 	cmd.Flags().StringArray("as-group", nil, "Group to impersonate for the operation. Repeat the flag to specify multiple groups.")
-	cmd.Flags().StringVarP(&res.outputFormat, "output", "o", "text", "output format: text, json, yaml")
+	cmd.Flags().StringVarP(&res.outputFormat, "output", "o", "text", "output format: "+strings.Join(outputFormats, ", "))
 
 	// Add shell completion functions
 	_ = cmd.RegisterFlagCompletionFunc("namespace", getNamespaces)

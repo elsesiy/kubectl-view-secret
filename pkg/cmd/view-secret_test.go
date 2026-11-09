@@ -372,6 +372,40 @@ type: Opaque
 	}
 }
 
+func TestBuildKubectlCommand(t *testing.T) {
+	tests := map[string]struct {
+		secretName string
+		args       []string
+		want       []string
+	}{
+		"list secrets": {
+			"",
+			nil,
+			[]string{"get", "secret", "-o", "json"},
+		},
+		"all flags": {
+			"mysecret",
+			[]string{"-n", "ns", "-c", "ctx", "-k", "cfg", "--as", "bob"},
+			[]string{"get", "secret", "mysecret", "-o", "json", "-n", "ns", "--context", "ctx", "--kubeconfig", "cfg", "--as", "bob"},
+		},
+		"every group is forwarded": {
+			"mysecret",
+			[]string{"--as", "bob", "--as-group", "a", "--as-group", "b"},
+			[]string{"get", "secret", "mysecret", "-o", "json", "--as", "bob", "--as-group", "a", "--as-group", "b"},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			cmd := NewCmdViewSecret()
+			assert.NoError(t, cmd.ParseFlags(tt.args))
+
+			opts := &CommandOpts{secretName: tt.secretName}
+			assert.Equal(t, tt.want, opts.buildKubectlCommand(cmd))
+		})
+	}
+}
+
 func TestCompletionFlagRegistration(t *testing.T) {
 	cmd := NewCmdViewSecret()
 

@@ -47,6 +47,9 @@ const (
 
 	# output in json (or yaml) instead of text
 	%[1]s view-secret <secret> -o/--output json
+
+	# impersonate a user and groups (repeat --as-group for each group)
+	%[1]s view-secret <secret> --as <user> --as-group <group1> --as-group <group2>
 `
 
 	secretDescription     = "Found %d keys in secret %q. Choose one or select 'all' to view."
@@ -69,16 +72,15 @@ var (
 
 // CommandOpts is the struct holding common properties
 type CommandOpts struct {
-	customContext       string
-	customNamespace     string
-	decodeAll           bool
-	impersonateAs       string
-	impersonateAsGroups string
-	kubeConfig          string
-	outputFormat        string
-	quiet               bool
-	secretKey           string
-	secretName          string
+	customContext   string
+	customNamespace string
+	decodeAll       bool
+	impersonateAs   string
+	kubeConfig      string
+	outputFormat    string
+	quiet           bool
+	secretKey       string
+	secretName      string
 }
 
 // NewCmdViewSecret creates the cobra command to be executed
@@ -109,7 +111,7 @@ func NewCmdViewSecret() *cobra.Command {
 	cmd.Flags().StringVarP(&res.customContext, "context", "c", res.customContext, "override the current context")
 	cmd.Flags().StringVarP(&res.kubeConfig, "kubeconfig", "k", res.kubeConfig, "explicitly provide the kubeconfig to use")
 	cmd.Flags().StringVar(&res.impersonateAs, "as", res.impersonateAs, "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
-	cmd.Flags().StringVar(&res.impersonateAsGroups, "as-group", res.impersonateAsGroups, "Groups to impersonate for the operation. Multipe groups can be specified by comma separated.")
+	cmd.Flags().StringArray("as-group", nil, "Group to impersonate for the operation. Repeat the flag to specify multiple groups.")
 	cmd.Flags().StringVarP(&res.outputFormat, "output", "o", "text", "output format: text, json, yaml")
 
 	// Add shell completion functions
@@ -171,7 +173,7 @@ func (c *CommandOpts) buildKubectlCommand(cmd *cobra.Command) []string {
 	ctxOverride, _ := cmd.Flags().GetString("context")
 	kubeConfigOverride, _ := cmd.Flags().GetString("kubeconfig")
 	impersonateOverride, _ := cmd.Flags().GetString("as")
-	impersonateGroupOverride, _ := cmd.Flags().GetString("as-group")
+	impersonateGroupsOverride, _ := cmd.Flags().GetStringArray("as-group")
 
 	commandArgs := []string{"get", "secret", "-o", "json"}
 	if c.secretName != "" {
@@ -194,8 +196,8 @@ func (c *CommandOpts) buildKubectlCommand(cmd *cobra.Command) []string {
 		commandArgs = append(commandArgs, "--as", impersonateOverride)
 	}
 
-	if impersonateGroupOverride != "" {
-		commandArgs = append(commandArgs, "--as-group", impersonateGroupOverride)
+	for _, group := range impersonateGroupsOverride {
+		commandArgs = append(commandArgs, "--as-group", group)
 	}
 
 	return commandArgs

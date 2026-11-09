@@ -93,7 +93,7 @@ Completion honors `-n`, `-c`, `-k`, `--as` and `--as-group`.
 ## Features
 
 ### Output Formats
-- **Text**: Default human-readable format
+- **Text**: Default human-readable format. Values are printed as `key='value'` without escaping, so do not feed it to a shell. Use JSON or YAML for scripts.
 - **JSON**: Structured output for automation and scripting
 - **YAML**: Alternative structured format
 

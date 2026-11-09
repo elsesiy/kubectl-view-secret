@@ -152,14 +152,22 @@ func (c *CommandOpts) ParseArgs(args []string) {
 // for secret selection, and outputs the decoded content in the
 // specified format.
 func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
-	output, err := runKubectl(c.buildKubectlCommand(cmd)...)
+	flags := kubectlFlags(cmd)
+
+	if c.secretName == "" {
+		if err := c.selectSecret(cmd, flags); err != nil {
+			return err
+		}
+	}
+
+	output, err := runKubectl(append([]string{"get", "secret", c.secretName, "-o", "json"}, flags...)...)
 	if err != nil {
 		return err
 	}
 
-	secret, err := c.parseSecretResponse(output, cmd)
-	if err != nil {
-		return err
+	var secret Secret
+	if err := json.Unmarshal(output, &secret); err != nil {
+		return fmt.Errorf("failed to parse kubectl output as secret: %w", err)
 	}
 
 	errWriter := cmd.OutOrStderr()
@@ -168,16 +176,6 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 	}
 
 	return ProcessSecretWithOptions(cmd.OutOrStdout(), errWriter, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll, c.outputFormat)
-}
-
-// buildKubectlCommand builds the kubectl command arguments
-func (c *CommandOpts) buildKubectlCommand(cmd *cobra.Command) []string {
-	commandArgs := []string{"get", "secret", "-o", "json"}
-	if c.secretName != "" {
-		commandArgs = []string{"get", "secret", c.secretName, "-o", "json"}
-	}
-
-	return append(commandArgs, kubectlFlags(cmd)...)
 }
 
 // kubectlFlags returns the flags that select the cluster, namespace and identity kubectl talks to
@@ -216,62 +214,51 @@ func runKubectl(args ...string) ([]byte, error) {
 }
 
 // kubectlNames returns the names of all resources of the given kind
+//
+// Unlike -o json or -o jsonpath, the default output makes kubectl ask the API server for a
+// table of metadata, so no secret data is downloaded just to list names.
 func kubectlNames(kind string, flags ...string) ([]string, error) {
-	out, err := runKubectl(append([]string{"get", kind, "-o", "jsonpath={.items[*].metadata.name}"}, flags...)...)
+	out, err := runKubectl(append([]string{"get", kind, "--no-headers"}, flags...)...)
 	if err != nil {
 		return nil, err
 	}
 
-	return strings.Fields(string(out)), nil
-}
-
-// parseSecretResponse parses the kubectl output and handles secret selection
-func (c *CommandOpts) parseSecretResponse(output []byte, cmd *cobra.Command) (Secret, error) {
-	var secret Secret
-	if c.secretName == "" {
-		return c.handleSecretSelection(output, cmd)
+	var names []string
+	for line := range strings.Lines(string(out)) {
+		if fields := strings.Fields(line); len(fields) > 0 {
+			names = append(names, fields[0]) // the first column is always the name
+		}
 	}
 
-	if err := json.Unmarshal(output, &secret); err != nil {
-		return secret, fmt.Errorf("failed to parse kubectl output as secret: %w", err)
-	}
-
-	return secret, nil
+	return names, nil
 }
 
-// handleSecretSelection handles the interactive selection of a secret from a list
-func (c *CommandOpts) handleSecretSelection(output []byte, cmd *cobra.Command) (Secret, error) {
-	var secretList SecretList
-	if err := json.Unmarshal(output, &secretList); err != nil {
-		return Secret{}, fmt.Errorf("failed to parse kubectl output as secret list: %w", err)
+// selectSecret lets the user pick one of the available secrets and stores the choice
+func (c *CommandOpts) selectSecret(cmd *cobra.Command, flags []string) error {
+	names, err := kubectlNames("secrets", flags...)
+	if err != nil {
+		return err
 	}
 
 	// Since we don't query valid namespaces, we'll avoid prompting the user to select a secret if we didn't retrieve any secrets
-	if len(secretList.Items) == 0 {
-		return Secret{}, ErrNoSecretFound
+	if len(names) == 0 {
+		return ErrNoSecretFound
 	}
 
-	opts := []string{}
-	secretMap := map[string]Secret{}
-	for _, v := range secretList.Items {
-		opts = append(opts, v.Metadata.Name)
-		secretMap[v.Metadata.Name] = v
-	}
-
-	err := huh.NewForm(
+	err = huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title(secretListTitle).
-				Description(fmt.Sprintf(secretListDescription, len(secretList.Items))).
-				Options(huh.NewOptions(opts...)...).
+				Description(fmt.Sprintf(secretListDescription, len(names))).
+				Options(huh.NewOptions(names...)...).
 				Value(&c.secretName),
 		),
 	).WithProgramOptions(tea.WithInput(cmd.InOrStdin()), tea.WithOutput(cmd.OutOrStdout())).Run()
 	if err != nil {
-		return Secret{}, fmt.Errorf("failed to get user selection: %w", err)
+		return fmt.Errorf("failed to get user selection: %w", err)
 	}
 
-	return secretMap[c.secretName], nil
+	return nil
 }
 
 // decodeAllData decodes the given keys of the secret and returns them as key-value pairs

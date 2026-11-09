@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os/exec"
-	"sort"
+	"slices"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
@@ -95,11 +96,8 @@ func NewCmdViewSecret() *cobra.Command {
 		Use:          "view-secret [secret-name] [secret-key]",
 		RunE: func(c *cobra.Command, args []string) error {
 			res.ParseArgs(args)
-			if err := res.Retrieve(c); err != nil {
-				return err
-			}
 
-			return nil
+			return res.Retrieve(c)
 		},
 	}
 
@@ -159,11 +157,12 @@ func (c *CommandOpts) Retrieve(cmd *cobra.Command) error {
 		return err
 	}
 
+	errWriter := cmd.OutOrStderr()
 	if c.quiet {
-		return ProcessSecretWithOptions(cmd.OutOrStdout(), io.Discard, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll, c.outputFormat)
+		errWriter = io.Discard
 	}
 
-	return ProcessSecretWithOptions(cmd.OutOrStdout(), cmd.OutOrStderr(), cmd.InOrStdin(), secret, c.secretKey, c.decodeAll, c.outputFormat)
+	return ProcessSecretWithOptions(cmd.OutOrStdout(), errWriter, cmd.InOrStdin(), secret, c.secretKey, c.decodeAll, c.outputFormat)
 }
 
 // buildKubectlCommand builds the kubectl command arguments
@@ -269,22 +268,11 @@ func (c *CommandOpts) handleSecretSelection(output []byte, cmd *cobra.Command) (
 	return secretMap[c.secretName], nil
 }
 
-// ProcessSecret takes the secret and user input to determine the output
-func ProcessSecret(outWriter, errWriter io.Writer, inputReader io.Reader, secret Secret, secretKey string, decodeAll bool) error {
-	return ProcessSecretWithOptions(outWriter, errWriter, inputReader, secret, secretKey, decodeAll, "text")
-}
-
-// decodeAllData decodes all data in the secret and returns sorted key-value pairs
-func decodeAllData(secret Secret, data SecretData) ([]KeyValue, error) {
-	var keys []string
-	for k := range data {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+// decodeAllData decodes the given keys of the secret and returns them as key-value pairs
+func decodeAllData(secret Secret, keys []string) ([]KeyValue, error) {
 	var decodedData []KeyValue
 	for _, k := range keys {
-		v := data[k]
-		s, err := secret.Decode(v)
+		s, err := secret.Decode(secret.Data[k])
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode key %s: %w", k, err)
 		}
@@ -300,14 +288,10 @@ func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Rea
 		return ErrSecretEmpty
 	}
 
-	var keys []string
-	for k := range data {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(data))
 
 	if decodeAll {
-		decodedData, err := decodeAllData(secret, data)
+		decodedData, err := decodeAllData(secret, keys)
 		if err != nil {
 			return err
 		}
@@ -316,7 +300,7 @@ func ProcessSecretWithOptions(outWriter, errWriter io.Writer, inputReader io.Rea
 		if _, err := fmt.Fprintf(errWriter, singleKeyDescription+"\n", keys[0]); err != nil {
 			return fmt.Errorf("failed to write to stderr: %w", err)
 		}
-		decodedData, err := decodeAllData(secret, data)
+		decodedData, err := decodeAllData(secret, keys)
 		if err != nil {
 			return err
 		}
@@ -410,22 +394,12 @@ func outputYAML(outWriter io.Writer, secret Secret, decodedData []KeyValue) erro
 
 // outputText outputs secret data as plain text
 func outputText(outWriter io.Writer, sortedData []KeyValue) error {
-	var format string
-
-	if len(sortedData) == 1 {
-		format = "%s\n"
-	} else {
-		format = "%s='%s'\n"
-	}
-
 	for _, kv := range sortedData {
-		var args []any
-		if len(sortedData) == 1 {
-			args = []any{kv.Value}
-		} else {
-			args = []any{kv.Key, kv.Value}
+		line := kv.Value + "\n"
+		if len(sortedData) > 1 {
+			line = fmt.Sprintf("%s='%s'\n", kv.Key, kv.Value)
 		}
-		if _, err := fmt.Fprintf(outWriter, format, args...); err != nil {
+		if _, err := io.WriteString(outWriter, line); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)
 		}
 	}

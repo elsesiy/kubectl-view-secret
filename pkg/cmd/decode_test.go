@@ -194,3 +194,19 @@ func TestDecode(t *testing.T) {
 		})
 	}
 }
+
+func TestDecodeHelmSizeLimit(t *testing.T) {
+	// A few KB of gzip that expand beyond the limit, as a crafted release secret would
+	var gz bytes.Buffer
+	w := gzip.NewWriter(&gz)
+	zeros := make([]byte, 1<<20)
+	for range maxHelmReleaseSize/len(zeros) + 1 {
+		_, err := w.Write(zeros)
+		assert.NoError(t, err)
+	}
+	assert.NoError(t, w.Close())
+	input := base64.StdEncoding.EncodeToString([]byte(base64.StdEncoding.EncodeToString(gz.Bytes())))
+
+	_, err := Secret{Type: Helm}.Decode(input)
+	assert.ErrorContains(t, err, "larger than")
+}
